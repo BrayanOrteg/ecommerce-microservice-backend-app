@@ -45,7 +45,11 @@ pipeline {
             steps {
                 sh '''
                 echo "Aplicando todos los manifiestos de la carpeta k8s (excepto Jenkins)"
-                find k8s -type f -name '*.yaml' ! -name 'jenkins*' -exec kubectl apply -f {} \;
+                for file in k8s/*.yaml; do
+                  if [[ "$file" != *jenkins* ]]; then
+                    kubectl apply -f "$file"
+                  fi
+                done
                 '''
             }
         }
