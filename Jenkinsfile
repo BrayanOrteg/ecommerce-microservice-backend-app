@@ -4,10 +4,7 @@ pipeline {
         REGISTRY = "tu-registro-docker"
         KUBE_CONFIG = credentials('kubeconfig-jenkins')
     }
-    tools {
-        jdk 'jdk11'
-        maven 'maven3'
-    }
+    // Se elimina la sección tools para evitar errores de configuración
     stages {
         stage('Preparar herramientas') {
             steps {
