@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+    environment {
+        REGISTRY = "tu-registro-docker"
+        KUBE_CONFIG = credentials('kubeconfig-jenkins')
+    }
+    tools {
+        jdk 'jdk11'
+        maven 'maven3'
+    }
+    stages {
+        stage('Preparar herramientas') {
+            steps {
+                sh '''
+                echo "Verificando Java y Maven"
+                java -version
+                mvn -version
+                echo "Instalando kubectl y minikube si es necesario"
+                if ! command -v kubectl; then
+                  curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+                  chmod +x kubectl && mv kubectl /usr/local/bin/
+                fi
+                if ! command -v minikube; then
+                  curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+                  chmod +x minikube && mv minikube /usr/local/bin/
+                fi
+                '''
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+        stage('Deploy Jenkins en K8s') {
+            steps {
+                sh '''
+                echo "Aplicando PV y Deployment de Jenkins en Kubernetes"
+                kubectl apply -f k8s/jenkins-pv.yaml
+                kubectl apply -f k8s/jenkins-deployment.yaml
+                '''
+            }
+        }
+        stage('Deploy Microservicios en Minikube') {
+            steps {
+                sh '''
+                echo "Aplicando todos los manifiestos de la carpeta k8s (excepto Jenkins)"
+                find k8s -type f -name '*.yaml' ! -name 'jenkins*' -exec kubectl apply -f {} \;
+                '''
+            }
+        }
+    }
+}
