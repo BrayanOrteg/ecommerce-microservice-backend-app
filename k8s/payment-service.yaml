@@ -3,12 +3,13 @@ kind: Service
 metadata:
   name: payment-service
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: payment-service
   ports:
     - port: 8400
       targetPort: 8400
+      nodePort: 30400
 ---
 apiVersion: apps/v1
 kind: Deployment

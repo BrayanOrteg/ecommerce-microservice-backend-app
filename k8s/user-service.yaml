@@ -3,12 +3,13 @@ kind: Service
 metadata:
   name: user-service
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: user-service
   ports:
     - port: 8700
       targetPort: 8700
+      nodePort: 30700
 ---
 apiVersion: apps/v1
 kind: Deployment

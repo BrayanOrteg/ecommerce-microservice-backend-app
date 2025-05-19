@@ -3,12 +3,13 @@ kind: Service
 metadata:
   name: proxy-client
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: proxy-client
   ports:
     - port: 8900
       targetPort: 8900
+      nodePort: 30890
 ---
 apiVersion: apps/v1
 kind: Deployment

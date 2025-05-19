@@ -3,12 +3,13 @@ kind: Service
 metadata:
   name: order-service
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: order-service
   ports:
     - port: 8300
       targetPort: 8300
+      nodePort: 30300
 ---
 apiVersion: apps/v1
 kind: Deployment

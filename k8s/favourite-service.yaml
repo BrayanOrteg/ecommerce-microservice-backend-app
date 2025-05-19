@@ -3,12 +3,13 @@ kind: Service
 metadata:
   name: favourite-service
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: favourite-service
   ports:
     - port: 8800
       targetPort: 8800
+      nodePort: 30800
 ---
 apiVersion: apps/v1
 kind: Deployment

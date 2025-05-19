@@ -46,11 +46,12 @@ pipeline {
             steps {
                 sh '''
                 export PATH=$HOME/bin:$PATH
-                echo "Aplicando todos los manifiestos de la carpeta k8s (excepto Jenkins)"
+                echo "Aplicando todos los manifiestos de la carpeta k8s (excepto Jenkins) en el namespace default"
                 for file in k8s/*.yaml; do
-                  if [[ "$file" != *jenkins* ]]; then
-                    kubectl apply -f "$file"
-                  fi
+                  case "$file" in
+                    *jenkins*) ;;
+                    *) kubectl apply -n default -f "$file" ;;
+                  esac
                 done
                 '''
             }
