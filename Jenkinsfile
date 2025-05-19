@@ -1,21 +1,25 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.9.6-eclipse-temurin-17'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any
     environment {
         REGISTRY = "tu-registro-docker"
         // KUBE_CONFIG = credentials('kubeconfig-jenkins') // Comentado para evitar error si la credencial no existe
     }
-    // Se elimina la sección tools para evitar errores de configuración
     stages {
         stage('Preparar herramientas') {
             steps {
                 sh '''
-                echo "Verificando Java y Maven"
+                echo "Verificando Java"
                 java -version
+                echo "Instalando Maven si es necesario"
+                if ! command -v mvn; then
+                  MAVEN_VERSION=3.9.6
+                  curl -fsSL https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz -o maven.tar.gz
+                  tar -xzf maven.tar.gz
+                  mv apache-maven-$MAVEN_VERSION /opt/maven
+                  export PATH=/opt/maven/bin:$PATH
+                  echo 'export PATH=/opt/maven/bin:$PATH' >> ~/.bashrc
+                fi
+                export PATH=/opt/maven/bin:$PATH
                 mvn -version
                 echo "Instalando kubectl y minikube si es necesario"
                 if ! command -v kubectl; then
@@ -31,7 +35,10 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh '''
+                export PATH=/opt/maven/bin:$PATH
+                mvn clean package -DskipTests
+                '''
             }
         }
         stage('Deploy Jenkins en K8s') {
