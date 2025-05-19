@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         REGISTRY = "tu-registro-docker"
-        KUBE_CONFIG = credentials('kubeconfig-jenkins')
+        // KUBE_CONFIG = credentials('kubeconfig-jenkins') // Comentado para evitar error si la credencial no existe
     }
     // Se elimina la sección tools para evitar errores de configuración
     stages {
