@@ -10,17 +10,8 @@ pipeline {
                 sh '''
                 echo "Verificando Java"
                 java -version
-                echo "Instalando Maven si es necesario"
-                if ! command -v mvn; then
-                  MAVEN_VERSION=3.9.6
-                  curl -fsSL https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz -o maven.tar.gz
-                  tar -xzf maven.tar.gz
-                  mv apache-maven-$MAVEN_VERSION /opt/maven
-                  export PATH=/opt/maven/bin:$PATH
-                  echo 'export PATH=/opt/maven/bin:$PATH' >> ~/.bashrc
-                fi
-                export PATH=/opt/maven/bin:$PATH
-                mvn -version
+                echo "Verificando Maven Wrapper"
+                ./mvnw -version || { echo 'Maven Wrapper no encontrado'; exit 1; }
                 echo "Instalando kubectl y minikube si es necesario"
                 if ! command -v kubectl; then
                   curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
@@ -35,10 +26,7 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh '''
-                export PATH=/opt/maven/bin:$PATH
-                mvn clean package -DskipTests
-                '''
+                sh './mvnw clean package -DskipTests'
             }
         }
         stage('Deploy Jenkins en K8s') {
