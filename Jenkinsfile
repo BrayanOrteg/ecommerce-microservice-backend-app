@@ -12,7 +12,7 @@ pipeline {
                 java -version
                 echo "Verificando Maven Wrapper"
                 ./mvnw -version || { echo 'Maven Wrapper no encontrado'; exit 1; }
-                echo "Instalando kubectl y minikube si es necesario"
+                echo "Instalando kubectl y minikube si es necesarioo"
                 mkdir -p $HOME/bin
                 export PATH=$HOME/bin:$PATH
                 if ! command -v kubectl; then
