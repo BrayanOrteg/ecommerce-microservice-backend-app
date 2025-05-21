@@ -20,6 +20,11 @@ spec:
   selector:
     matchLabels:
       app: payment-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -29,7 +34,15 @@ spec:
         - name: payment-service
           image: selimhorri/payment-service-ecommerce-boot:0.1.0
           ports:
-            - containerPort: 8400
+            - containerPort: 8400          
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "dev"
+            - name: SPRING_ZIPKIN_BASE_URL
+              value: "http://zipkin:9411"
             - name: SPRING_CONFIG_IMPORT
               value: "optional:configserver:http://cloud-config:9296"
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: "http://service-discovery:8761/eureka/"
+            - name: EUREKA_INSTANCE
+              value: "payment-service"

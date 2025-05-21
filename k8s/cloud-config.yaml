@@ -19,16 +19,25 @@ spec:
   selector:
     matchLabels:
       app: cloud-config
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
         app: cloud-config
     spec:
+      initContainers:
+        - name: wait-for-service-discovery
+          image: busybox:1.28
+          command: ['sh', '-c', 'until wget -T 5 -q -O- http://service-discovery:8761/actuator/health; do echo "Waiting for service-discovery"; sleep 10; done;']      
       containers:
         - name: cloud-config
           image: selimhorri/cloud-config-ecommerce-boot:0.1.0
           ports:
-            - containerPort: 9296
+            - containerPort: 9296          
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "dev"
@@ -36,3 +45,31 @@ spec:
               value: "http://zipkin:9411"
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://service-discovery:8761/eureka/"
+            - name: EUREKA_INSTANCE
+              value: "cloud-config"
+        # Sidecar container para redirigir localhost:8761 a service-discovery:8761
+        - name: eureka-proxy
+          image: alpine/socat
+          args:
+            - -d
+            - -d
+            - TCP-LISTEN:8761,fork,reuseaddr
+            - TCP:service-discovery:8761
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9296
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9296
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
