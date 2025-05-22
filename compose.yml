@@ -5,7 +5,7 @@ services:
     ports:
       - 9411:9411
   service-discovery-container:
-    image: ${DOCKER_NAMESPACE:-kenbra}/service-discovery-ecommerce-boot:0.1.0
+    image: kenbra/service-discovery-ecommerce-boot:0.1.0
     ports:
       - 8761:8761
     environment:

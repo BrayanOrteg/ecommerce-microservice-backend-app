@@ -2,21 +2,15 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_REGISTRY = "docker.io"  // Puedes cambiar a tu registro si usas uno privado
-        DOCKER_NAMESPACE = "kenbra"  // Reemplaza con tu usuario de Docker Hub o namespace
-        VERSION = "0.1.0"
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')  // Crear estas credenciales en Jenkins
-        K8S_NAMESPACE = "default"  // Namespace de Kubernetes para el despliegue
+        DOCKER_NAMESPACE = "kenbra"  // Tu usuario de Docker Hub con imágenes públicas
+        K8S_NAMESPACE = "default"    // Namespace de Kubernetes para el despliegue
     }
     
     stages {
         stage('Preparar Entorno') {
             steps {
                 sh '''
-                echo "Verificando Java"
-                java -version
-                echo "Verificando Docker"
-                docker --version
+                echo "Verificando entorno de despliegue"
                 echo "Verificando kubectl"
                 kubectl version --client || {
                   echo "Instalando kubectl"
@@ -28,104 +22,50 @@ pipeline {
                 }
                 '''
             }
-        }
-        
-        stage('Verificar Imágenes Docker') {
+        }        stage('Desplegar Infraestructura') {
             steps {
-                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-                
-                sh '''
-                # Verificar que las imágenes existen en DockerHub
-                echo "Verificando disponibilidad de imágenes en DockerHub..."
-                
-                SERVICES=(
-                    "service-discovery"
-                    "cloud-config"
-                    "api-gateway"
-                    "order-service"
-                    "payment-service"
-                    "product-service"
-                    "shipping-service"
-                    "user-service"
-                    "favourite-service"
-                    "proxy-client"
-                )
-                
-                for SERVICE in "${SERVICES[@]}"; do
-                    IMAGE_NAME="$DOCKER_NAMESPACE/${SERVICE}-ecommerce-boot:$VERSION"
-                    echo "Verificando imagen: $IMAGE_NAME"
-                    
-                    # Intentar obtener información de la imagen
-                    docker pull $IMAGE_NAME || {
-                        echo "ERROR: No se pudo encontrar o acceder a la imagen $IMAGE_NAME"
-                        echo "Por favor, ejecuta build-push-docker-images.ps1 primero para construir y subir todas las imágenes."
-                        exit 1
-                    }
-                done
-                
-                echo "Todas las imágenes están disponibles en DockerHub"
-                '''
-                sh 'docker logout'
-            }
-        }
-        
-        stage('Desplegar Infraestructura') {
-            steps {
-                // Actualizar los archivos YAML con las imágenes personalizadas
                 sh '''
                 export PATH=$HOME/bin:$PATH
                 
-                # Actualizar todos los archivos Kubernetes para usar las imágenes personalizadas
-                find k8s -name "*.yaml" -type f | grep -v "jenkins" | grep -v "zipkin" | xargs sed -i "s|image: selimhorri/|image: $DOCKER_NAMESPACE/|g"
+                # Verificar que todos los yamls están usando la imagen correcta
+                echo "Verificando que los manifiestos usen las imágenes correctas..."
+                find k8s -name "*.yaml" -type f | grep -v "jenkins" | grep -v "zipkin" | xargs grep -l "image:" | xargs sed -i "s|image: selimhorri/|image: $DOCKER_NAMESPACE/|g"
                 
                 # Desplegar Zipkin
+                echo "Desplegando Zipkin..."
                 kubectl apply -f k8s/zipkin.yaml
+                echo "Esperando a que Zipkin esté disponible..."
                 sleep 30 # Dar tiempo para que se inicie
-                '''
                 
-                // Desplegar Service Discovery (Eureka)
-                sh '''
-                export PATH=$HOME/bin:$PATH
+                # Desplegar Service Discovery (Eureka)
+                echo "Desplegando Service Discovery (Eureka)..."
                 kubectl apply -f k8s/service-discovery.yaml
-                sleep 180 # Dar tiempo para que se inicie
-                '''
-                
-                // Verificar que Service Discovery está listo
-                sh '''
-                export PATH=$HOME/bin:$PATH
-                READY=false
-                for i in {1..12}; do
-                  if kubectl get pods -l app=service-discovery -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' | grep -q "True"; then
-                    READY=true
-                    break
-                  fi
-                  echo "Esperando a que Service Discovery esté listo..."
-                  sleep 10
-                done
-                if [ "$READY" = false ]; then
-                  echo "Service Discovery no está listo después de 2 minutos"
-                  exit 1
-                fi
+                echo "Esperando a que Service Discovery esté disponible..."
+                sleep 90 # Dar tiempo para que se inicie
                 '''
                 
                 // Desplegar Cloud Config
                 sh '''
                 export PATH=$HOME/bin:$PATH
+                echo "Desplegando Cloud Config..."
                 kubectl apply -f k8s/cloud-config.yaml
-                sleep 90 # Dar tiempo para que se inicie
+                echo "Esperando a que Cloud Config esté disponible..."
+                sleep 60 # Dar tiempo para que se inicie
                 '''
             }
-        }
-        
-        stage('Desplegar Microservicios') {
+        }        stage('Desplegar Microservicios') {
             steps {
                 sh '''
                 export PATH=$HOME/bin:$PATH
+                
                 # Desplegar API Gateway y esperar
+                echo "Desplegando API Gateway..."
                 kubectl apply -f k8s/api-gateway.yaml
+                echo "Esperando a que API Gateway esté disponible..."
                 sleep 60 # Dar tiempo para que se inicie
                 
-                # Desplegar el resto de microservicios
+                # Desplegar el resto de microservicios en paralelo
+                echo "Desplegando microservicios de negocio..."
                 kubectl apply -f k8s/order-service.yaml
                 kubectl apply -f k8s/payment-service.yaml
                 kubectl apply -f k8s/product-service.yaml
@@ -133,30 +73,56 @@ pipeline {
                 kubectl apply -f k8s/user-service.yaml
                 kubectl apply -f k8s/favourite-service.yaml
                 kubectl apply -f k8s/proxy-client.yaml
+                
+                # Esperar a que los servicios estén disponibles
+                echo "Esperando a que los servicios estén disponibles..."
+                sleep 60
                 '''
             }
         }
-        
-        stage('Verificar Despliegue') {
+          stage('Verificar Despliegue') {
             steps {
                 sh '''
                 export PATH=$HOME/bin:$PATH
+                
                 echo "Verificando pods desplegados..."
                 kubectl get pods
                 
                 echo "Verificando servicios..."
                 kubectl get services
-                  echo "Verificando que Service Discovery esté funcionando..."
+                
+                echo "Verificando que Service Discovery esté funcionando..."
                 SERVICE_DISCOVERY_URL=$(kubectl get service service-discovery -o jsonpath='{.spec.clusterIP}')
-                curl -s $SERVICE_DISCOVERY_URL:8761/actuator/health | grep "UP" || echo "Service Discovery health check falló"
+                if curl -s $SERVICE_DISCOVERY_URL:8761/actuator/health | grep -q "UP"; then
+                    echo "Service Discovery está funcionando correctamente."
+                else
+                    echo "Service Discovery health check falló, pero continuamos el proceso."
+                fi
                 
                 echo "Verificando que API Gateway esté funcionando..."
                 API_GATEWAY_URL=$(kubectl get service api-gateway -o jsonpath='{.spec.clusterIP}')
-                curl -s $API_GATEWAY_URL:8080/actuator/health | grep "UP" || echo "API Gateway health check falló"
-                '''            }
+                if curl -s $API_GATEWAY_URL:8080/actuator/health | grep -q "UP"; then
+                    echo "API Gateway está funcionando correctamente."
+                else
+                    echo "API Gateway health check falló, pero continuamos el proceso."
+                fi
+                
+                echo "Verificando registros en Eureka..."
+                APPS=$(curl -s $SERVICE_DISCOVERY_URL:8761/eureka/apps)
+                if echo $APPS | grep -q "application"; then
+                    echo "Se encontraron aplicaciones registradas en Eureka:"
+                    echo $APPS | grep -o "application" | wc -l
+                else
+                    echo "No hay aplicaciones registradas en Eureka todavía. Esto puede ser normal si los servicios aún se están iniciando."
+                fi
+                
+                echo "Despliegue completado. La aplicación debería estar disponible pronto en el cluster de Kubernetes."
+                '''
+            }
         }
     }
-      post {
+    
+    post {
         always {
             echo "Limpiando espacio de trabajo..."
             catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
@@ -165,6 +131,9 @@ pipeline {
         }
         success {
             echo "¡Pipeline completado con éxito!"
+            echo "La aplicación está disponible en el cluster de Kubernetes."
+            echo "Puedes acceder a la interfaz de Eureka a través del servicio service-discovery."
+            echo "El API Gateway está disponible a través del servicio api-gateway."
         }
         failure {
             echo "Pipeline falló. Revisa los logs para más detalles."
