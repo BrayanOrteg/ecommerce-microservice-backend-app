@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         DOCKER_REGISTRY = "docker.io"  // Puedes cambiar a tu registro si usas uno privado
-        DOCKER_NAMESPACE = "tuusuario"  // Reemplaza con tu usuario de Docker Hub o namespace
+        DOCKER_NAMESPACE = "kenbra"  // Reemplaza con tu usuario de Docker Hub o namespace
         VERSION = "0.1.0"
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')  // Crear estas credenciales en Jenkins
         K8S_NAMESPACE = "default"  // Namespace de Kubernetes para el despliegue
@@ -70,13 +70,12 @@ pipeline {
             }
         }
           stage('Desplegar Infraestructura') {
-            steps {
-                // Actualizar los archivos YAML con las imágenes personalizadas
+            steps {                // Actualizar los archivos YAML con las imágenes personalizadas
                 sh '''
                 export PATH=$HOME/bin:$PATH
                 
                 # Actualizar todos los archivos Kubernetes para usar las imágenes personalizadas
-                find k8s -name "*.yaml" -type f | grep -v "jenkins\|zipkin" | xargs sed -i "s|image: selimhorri/|image: $DOCKER_NAMESPACE/|g"
+                find k8s -name "*.yaml" -type f | grep -v "jenkins" | grep -v "zipkin" | xargs sed -i "s|image: selimhorri/|image: $DOCKER_NAMESPACE/|g"
                 
                 # Desplegar Zipkin
                 kubectl apply -f k8s/zipkin.yaml
