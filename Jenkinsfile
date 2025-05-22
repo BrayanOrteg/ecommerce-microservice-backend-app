@@ -157,10 +157,11 @@ pipeline {
             }
         }
     }
-    
-    post {
+      post {
         always {
-            cleanWs()
+            node {
+                cleanWs()
+            }
         }
         success {
             echo "¡Pipeline completado con éxito!"
