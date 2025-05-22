@@ -6,6 +6,7 @@ pipeline {
         DOCKER_NAMESPACE = "tuusuario"  // Reemplaza con tu usuario de Docker Hub o namespace
         VERSION = "0.1.0"
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')  // Crear estas credenciales en Jenkins
+        K8S_NAMESPACE = "default"  // Namespace de Kubernetes para el despliegue
     }
     
     stages {
@@ -14,8 +15,6 @@ pipeline {
                 sh '''
                 echo "Verificando Java"
                 java -version
-                echo "Verificando Maven Wrapper"
-                ./mvnw -version || { echo 'Maven Wrapper no encontrado'; exit 1; }
                 echo "Verificando Docker"
                 docker --version
                 echo "Verificando kubectl"
@@ -31,84 +30,55 @@ pipeline {
             }
         }
         
-        stage('Build con Maven') {
-            steps {
-                sh './mvnw clean package -DskipTests'
-            }
-        }
-        
-        stage('Construir y Subir Imágenes Docker') {
+        stage('Verificar Imágenes Docker') {
             steps {
                 sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
                 
-                // Servicio de Descubrimiento (Eureka)
                 sh '''
-                cd service-discovery
-                docker build -t $DOCKER_NAMESPACE/service-discovery-ecommerce-boot:$VERSION .
-                docker push $DOCKER_NAMESPACE/service-discovery-ecommerce-boot:$VERSION
-                '''
+                # Verificar que las imágenes existen en DockerHub
+                echo "Verificando disponibilidad de imágenes en DockerHub..."
                 
-                // Cloud Config
-                sh '''
-                cd cloud-config
-                docker build -t $DOCKER_NAMESPACE/cloud-config-ecommerce-boot:$VERSION .
-                docker push $DOCKER_NAMESPACE/cloud-config-ecommerce-boot:$VERSION
-                '''
+                SERVICES=(
+                    "service-discovery"
+                    "cloud-config"
+                    "api-gateway"
+                    "order-service"
+                    "payment-service"
+                    "product-service"
+                    "shipping-service"
+                    "user-service"
+                    "favourite-service"
+                    "proxy-client"
+                )
                 
-                // API Gateway
-                sh '''
-                cd api-gateway
-                docker build -t $DOCKER_NAMESPACE/api-gateway-ecommerce-boot:$VERSION .
-                docker push $DOCKER_NAMESPACE/api-gateway-ecommerce-boot:$VERSION
-                '''
+                for SERVICE in "${SERVICES[@]}"; do
+                    IMAGE_NAME="$DOCKER_NAMESPACE/${SERVICE}-ecommerce-boot:$VERSION"
+                    echo "Verificando imagen: $IMAGE_NAME"
+                    
+                    # Intentar obtener información de la imagen
+                    docker pull $IMAGE_NAME || {
+                        echo "ERROR: No se pudo encontrar o acceder a la imagen $IMAGE_NAME"
+                        echo "Por favor, ejecuta build-push-docker-images.ps1 primero para construir y subir todas las imágenes."
+                        exit 1
+                    }
+                done
                 
-                // Microservicios de negocio
-                sh '''
-                # Order Service
-                cd order-service
-                docker build -t $DOCKER_NAMESPACE/order-service-ecommerce-boot:$VERSION .
-                docker push $DOCKER_NAMESPACE/order-service-ecommerce-boot:$VERSION
-                
-                # Payment Service
-                cd ../payment-service
-                docker build -t $DOCKER_NAMESPACE/payment-service-ecommerce-boot:$VERSION .
-                docker push $DOCKER_NAMESPACE/payment-service-ecommerce-boot:$VERSION
-                
-                # Product Service
-                cd ../product-service
-                docker build -t $DOCKER_NAMESPACE/product-service-ecommerce-boot:$VERSION .
-                docker push $DOCKER_NAMESPACE/product-service-ecommerce-boot:$VERSION
-                
-                # Shipping Service
-                cd ../shipping-service
-                docker build -t $DOCKER_NAMESPACE/shipping-service-ecommerce-boot:$VERSION .
-                docker push $DOCKER_NAMESPACE/shipping-service-ecommerce-boot:$VERSION
-                
-                # User Service
-                cd ../user-service
-                docker build -t $DOCKER_NAMESPACE/user-service-ecommerce-boot:$VERSION .
-                docker push $DOCKER_NAMESPACE/user-service-ecommerce-boot:$VERSION
-                
-                # Favourite Service
-                cd ../favourite-service
-                docker build -t $DOCKER_NAMESPACE/favourite-service-ecommerce-boot:$VERSION .
-                docker push $DOCKER_NAMESPACE/favourite-service-ecommerce-boot:$VERSION
-                
-                # Proxy Client
-                cd ../proxy-client
-                docker build -t $DOCKER_NAMESPACE/proxy-client-ecommerce-boot:$VERSION .
-                docker push $DOCKER_NAMESPACE/proxy-client-ecommerce-boot:$VERSION
+                echo "Todas las imágenes están disponibles en DockerHub"
                 '''
                 
                 sh 'docker logout'
             }
         }
-        
-        stage('Desplegar Infraestructura') {
+          stage('Desplegar Infraestructura') {
             steps {
-                // Desplegar Zipkin
+                // Actualizar los archivos YAML con las imágenes personalizadas
                 sh '''
                 export PATH=$HOME/bin:$PATH
+                
+                # Actualizar todos los archivos Kubernetes para usar las imágenes personalizadas
+                find k8s -name "*.yaml" -type f | grep -v "jenkins\|zipkin" | xargs sed -i "s|image: selimhorri/|image: $DOCKER_NAMESPACE/|g"
+                
+                # Desplegar Zipkin
                 kubectl apply -f k8s/zipkin.yaml
                 sleep 30 # Dar tiempo para que se inicie
                 '''
@@ -117,7 +87,7 @@ pipeline {
                 sh '''
                 export PATH=$HOME/bin:$PATH
                 kubectl apply -f k8s/service-discovery.yaml
-                sleep 60 # Dar tiempo para que se inicie
+                sleep 180 # Dar tiempo para que se inicie
                 '''
                 
                 // Verificar que Service Discovery está listo
@@ -142,7 +112,7 @@ pipeline {
                 sh '''
                 export PATH=$HOME/bin:$PATH
                 kubectl apply -f k8s/cloud-config.yaml
-                sleep 60 # Dar tiempo para que se inicie
+                sleep 90 # Dar tiempo para que se inicie
                 '''
             }
         }

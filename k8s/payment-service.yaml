@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: selimhorri/payment-service-ecommerce-boot:0.1.0
+          image: kenbra/payment-service-ecommerce-boot:0.1.0
           ports:
             - containerPort: 8400          
           env:

@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
         - name: proxy-client
-          image: selimhorri/proxy-client-ecommerce-boot:0.1.0
+          image: kenbra/proxy-client-ecommerce-boot:0.1.0
           ports:
             - containerPort: 8900          
           env:

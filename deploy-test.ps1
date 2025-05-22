@@ -8,7 +8,7 @@ minikube delete
 
 # Iniciar un nuevo Minikube
 Write-Host "Iniciando un nuevo Minikube..." -ForegroundColor Yellow
-minikube start
+minikube start --cpus=no-limit --memory=no-limit
 
 # Habilitar el addon de ingress
 Write-Host "Habilitando addons de Minikube..." -ForegroundColor Yellow
@@ -32,12 +32,12 @@ kubectl wait --for=condition=available --timeout=10s deployment/zipkin
 # Desplegar Service Discovery (Eureka)
 Write-Host "Desplegando Service Discovery (Eureka)..." -ForegroundColor Yellow
 kubectl apply -f service-discovery.yaml
-kubectl wait --for=condition=available --timeout=120s deployment/service-discovery
+kubectl wait --for=condition=available --timeout=140s deployment/service-discovery
 
 # Desplegar Cloud Config
 Write-Host "Desplegando Cloud Config..." -ForegroundColor Yellow
 kubectl apply -f cloud-config.yaml
-kubectl wait --for=condition=available --timeout=30s deployment/cloud-config
+kubectl wait --for=condition=available --timeout=60s deployment/cloud-config
 
 
 

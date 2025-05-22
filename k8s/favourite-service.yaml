@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
         - name: favourite-service
-          image: selimhorri/favourite-service-ecommerce-boot:0.1.0
+          image: kenbra/favourite-service-ecommerce-boot:0.1.0
           ports:
             - containerPort: 8800          
           env:

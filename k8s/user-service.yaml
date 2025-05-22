@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: selimhorri/user-service-ecommerce-boot:0.1.0
+          image: kenbra/user-service-ecommerce-boot:0.1.0
           ports:
             - containerPort: 8700          
           env:
