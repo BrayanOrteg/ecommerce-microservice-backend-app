@@ -65,12 +65,13 @@ pipeline {
                 
                 echo "Todas las imágenes están disponibles en DockerHub"
                 '''
-                
                 sh 'docker logout'
             }
         }
-          stage('Desplegar Infraestructura') {
-            steps {                // Actualizar los archivos YAML con las imágenes personalizadas
+        
+        stage('Desplegar Infraestructura') {
+            steps {
+                // Actualizar los archivos YAML con las imágenes personalizadas
                 sh '''
                 export PATH=$HOME/bin:$PATH
                 
@@ -145,21 +146,20 @@ pipeline {
                 
                 echo "Verificando servicios..."
                 kubectl get services
-                
-                echo "Verificando que Service Discovery esté funcionando..."
-                SERVICE_DISCOVERY_URL=$(minikube service service-discovery --url 2>/dev/null || kubectl get service service-discovery -o jsonpath='{.spec.clusterIP}')
+                  echo "Verificando que Service Discovery esté funcionando..."
+                SERVICE_DISCOVERY_URL=$(kubectl get service service-discovery -o jsonpath='{.spec.clusterIP}')
                 curl -s $SERVICE_DISCOVERY_URL:8761/actuator/health | grep "UP" || echo "Service Discovery health check falló"
                 
                 echo "Verificando que API Gateway esté funcionando..."
-                API_GATEWAY_URL=$(minikube service api-gateway --url 2>/dev/null || kubectl get service api-gateway -o jsonpath='{.spec.clusterIP}')
+                API_GATEWAY_URL=$(kubectl get service api-gateway -o jsonpath='{.spec.clusterIP}')
                 curl -s $API_GATEWAY_URL:8080/actuator/health | grep "UP" || echo "API Gateway health check falló"
-                '''
-            }
+                '''            }
         }
     }
       post {
         always {
-            node {
+            echo "Limpiando espacio de trabajo..."
+            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                 cleanWs()
             }
         }
