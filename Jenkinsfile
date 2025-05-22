@@ -19,10 +19,11 @@ pipeline {
                   curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
                   chmod +x kubectl && mv kubectl $HOME/bin/
                   echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
-                }
-                '''
+                }                '''
             }
-        }        stage('Desplegar Infraestructura') {
+        }
+        
+        stage('Desplegar Infraestructura') {
             steps {
                 sh '''
                 export PATH=$HOME/bin:$PATH
@@ -50,10 +51,11 @@ pipeline {
                 echo "Desplegando Cloud Config..."
                 kubectl apply -f k8s/cloud-config.yaml
                 echo "Esperando a que Cloud Config esté disponible..."
-                sleep 60 # Dar tiempo para que se inicie
-                '''
+                sleep 60 # Dar tiempo para que se inicie                '''
             }
-        }        stage('Desplegar Microservicios') {
+        }
+        
+        stage('Desplegar Microservicios') {
             steps {
                 sh '''
                 export PATH=$HOME/bin:$PATH
@@ -76,11 +78,11 @@ pipeline {
                 
                 # Esperar a que los servicios estén disponibles
                 echo "Esperando a que los servicios estén disponibles..."
-                sleep 60
-                '''
+                sleep 60                '''
             }
         }
-          stage('Verificar Despliegue') {
+        
+        stage('Verificar Despliegue') {
             steps {
                 sh '''
                 export PATH=$HOME/bin:$PATH
