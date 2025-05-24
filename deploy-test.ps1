@@ -22,6 +22,17 @@ minikube status
 # Cambiar al directorio de los manifiestos de Kubernetes
 cd k8s
 
+write-host "==============================================`nCreando entorno de Jenkins`n==============================================" -ForegroundColor Cyan
+
+# Crear un namespace para Jenkins
+Write-Host "Creando namespace para Jenkins..." -ForegroundColor Yellow
+kubectl create namespace jenkins
+
+kubectl apply -f jenkins-pv.yaml -n jenkins
+kubectl apply -f jenkins-rbac.yaml -n jenkins
+kubectl apply -f jenkins-deployment.yaml -n jenkins
+kubectl apply -f jenkins-rbac-default.yaml
+
 Write-Host "==============================================`nDesplegando servicios base`n==============================================" -ForegroundColor Cyan
 
 # Desplegar Zipkin primero
@@ -32,12 +43,12 @@ kubectl wait --for=condition=available --timeout=10s deployment/zipkin
 # Desplegar Service Discovery (Eureka)
 Write-Host "Desplegando Service Discovery (Eureka)..." -ForegroundColor Yellow
 kubectl apply -f service-discovery.yaml
-kubectl wait --for=condition=available --timeout=140s deployment/service-discovery
+kubectl wait --for=condition=available --timeout=150s deployment/service-discovery
 
 # Desplegar Cloud Config
 Write-Host "Desplegando Cloud Config..." -ForegroundColor Yellow
 kubectl apply -f cloud-config.yaml
-kubectl wait --for=condition=available --timeout=60s deployment/cloud-config
+kubectl wait --for=condition=available --timeout=80s deployment/cloud-config
 
 
 

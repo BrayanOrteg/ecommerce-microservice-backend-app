@@ -1,0 +1,27 @@
+server:
+  servlet:
+    context-path: ""  # Disable context path for tests
+  port: 0  # Use random port
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:ecommerce_test_db;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        use_sql_comments: true
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+    default-property-inclusion: non_null

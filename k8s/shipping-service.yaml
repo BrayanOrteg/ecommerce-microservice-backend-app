@@ -30,7 +30,7 @@ spec:
       labels:
         app: shipping-service
     spec:
-      containers:
+      containers:        
         - name: shipping-service
           image: kenbra/shipping-service-ecommerce-boot:0.1.0
           ports:
@@ -46,3 +46,28 @@ spec:
               value: "http://service-discovery:8761/eureka/"
             - name: EUREKA_INSTANCE
               value: "shipping-service"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"          
+          readinessProbe:
+            httpGet:
+              path: /shipping-service/actuator/health
+              port: 8600
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /shipping-service/actuator/health
+              port: 8600
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3

@@ -48,9 +48,8 @@ public interface ProductClientService {
 			@RequestBody 
 			@NotNull(message = "Input must not be NULL!") 
 			@Valid final ProductDto productDto);
-	
-	@DeleteMapping("/{productId}")
-	ResponseEntity<Boolean> deleteById(@PathVariable("productId") final String productId);
+		@DeleteMapping("/{productId}")
+	ResponseEntity<Void> deleteById(@PathVariable("productId") final String productId);
 	
 }
 

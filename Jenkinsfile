@@ -22,6 +22,41 @@ pipeline {
                 }                '''
             }
         }
+          stage('Ejecutar Pruebas Unitarias') {
+            steps {
+                sh '''
+                echo "Ejecutando pruebas unitarias en el servicio de productos"
+                cd product-service
+                ./mvnw test || mvn test
+                cd ..
+                '''
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+        
+        stage('Ejecutar Pruebas de Integración') {
+            steps {
+                sh '''
+                echo "Ejecutando pruebas de integración en los microservicios"
+                
+                # Configurar la base de datos de pruebas si es necesario
+                
+                # Ejecutar pruebas de integración en product-service
+                cd product-service
+                ./mvnw test -Dtest=*Integration* || mvn test -Dtest=*Integration*
+                cd ..
+                '''
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*Integration*.xml'
+                }
+            }
+        }
         
         stage('Desplegar Infraestructura') {
             steps {

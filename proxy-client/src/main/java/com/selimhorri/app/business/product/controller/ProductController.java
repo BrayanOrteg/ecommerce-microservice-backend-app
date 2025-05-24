@@ -32,10 +32,10 @@ public class ProductController {
 	public ResponseEntity<ProductDto> findById(@PathVariable("productId") final String productId) {
 		return ResponseEntity.ok(this.productClientService.findById(productId).getBody());
 	}
-	
-	@PostMapping
+		@PostMapping
 	public ResponseEntity<ProductDto> save(@RequestBody final ProductDto productDto) {
-		return ResponseEntity.ok(this.productClientService.save(productDto).getBody());
+		ResponseEntity<ProductDto> response = this.productClientService.save(productDto);
+		return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
 	}
 	
 	@PutMapping
@@ -47,11 +47,11 @@ public class ProductController {
 	public ResponseEntity<ProductDto> update(@PathVariable("productId") final String productId, 
 			@RequestBody final ProductDto productDto) {
 		return ResponseEntity.ok(this.productClientService.update(productId, productDto).getBody());
-	}
-	
-	@DeleteMapping("/{productId}")
-	public ResponseEntity<Boolean> deleteById(@PathVariable("productId") final String productId) {
-		return ResponseEntity.ok(this.productClientService.deleteById(productId).getBody());
+	}	@DeleteMapping("/{productId}")
+	public ResponseEntity<Void> deleteById(@PathVariable("productId") final String productId) {
+		// Simplemente reenviar el status code 204 No Content del servicio
+		this.productClientService.deleteById(productId);
+		return ResponseEntity.noContent().build();
 	}
 	
 	
