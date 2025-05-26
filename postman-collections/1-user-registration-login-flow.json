@@ -1,0 +1,378 @@
+{
+  "info": {
+    "name": "E2E Test 1: User Registration and Login Flow",
+    "description": "Flujo completo de registro de usuario, autenticación y gestión de perfil",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "api_gateway_url",
+      "value": "{{API_GATEWAY_URL}}",
+      "type": "string",
+      "description": "URL del API Gateway (puede ser localhost:9191 o la URL de minikube)"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "credentialId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "addressId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Configurar URL base si no está definida",
+          "if (!pm.environment.get('API_GATEWAY_URL') && !pm.globals.get('API_GATEWAY_URL')) {",
+          "    pm.globals.set('API_GATEWAY_URL', 'http://localhost:9191');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check API Gateway",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('API Gateway está disponible', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response time is less than 5000ms', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{api_gateway_url}}/actuator/health",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["actuator", "health"]
+        },
+        "description": "Verificar que el API Gateway esté funcionando"
+      }
+    },
+    {
+      "name": "2. Create New User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('User created successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains user data', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('userId');",
+              "    pm.expect(responseJson).to.have.property('firstName');",
+              "    pm.expect(responseJson).to.have.property('lastName');",
+              "    pm.expect(responseJson).to.have.property('email');",
+              "    ",
+              "    // Guardar userId para usar en siguientes requests",
+              "    pm.collectionVariables.set('userId', responseJson.userId);",
+              "});",
+              "",
+              "pm.test('User data is correct', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.firstName).to.eql('Juan');",
+              "    pm.expect(responseJson.lastName).to.eql('Pérez');",
+              "    pm.expect(responseJson.email).to.eql('juan.perez@email.com');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Pérez\",\n  \"email\": \"juan.perez@email.com\",\n  \"phone\": \"+573001234567\",\n  \"birthDate\": \"1990-05-15\"\n}"
+        },
+        "url": {
+          "raw": "{{api_gateway_url}}/api/users",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "users"]
+        },
+        "description": "Crear un nuevo usuario en el sistema"
+      }
+    },
+    {
+      "name": "3. Create User Credentials",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Credentials created successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains credential data', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('credentialId');",
+              "    pm.expect(responseJson).to.have.property('username');",
+              "    pm.expect(responseJson).to.have.property('isEnabled');",
+              "    ",
+              "    // Guardar credentialId para usar en siguientes requests",
+              "    pm.collectionVariables.set('credentialId', responseJson.credentialId);",
+              "});",
+              "",
+              "pm.test('Credentials data is correct', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.username).to.eql('juan.perez');",
+              "    pm.expect(responseJson.isEnabled).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"juan.perez\",\n  \"password\": \"Password123!\",\n  \"roleBasedAuthority\": \"ROLE_USER\",\n  \"isEnabled\": true,\n  \"isAccountNonExpired\": true,\n  \"isAccountNonLocked\": true,\n  \"isCredentialsNonExpired\": true\n}"
+        },
+        "url": {
+          "raw": "{{api_gateway_url}}/api/credentials",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "credentials"]
+        },
+        "description": "Crear credenciales de acceso para el usuario"
+      }
+    },
+    {
+      "name": "4. Add User Address",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Address created successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains address data', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('addressId');",
+              "    pm.expect(responseJson).to.have.property('fullAddress');",
+              "    pm.expect(responseJson).to.have.property('city');",
+              "    ",
+              "    // Guardar addressId para usar en siguientes requests",
+              "    pm.collectionVariables.set('addressId', responseJson.addressId);",
+              "});",
+              "",
+              "pm.test('Address data is correct', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.fullAddress).to.eql('Carrera 15 #25-30');",
+              "    pm.expect(responseJson.city).to.eql('Bogotá');",
+              "    pm.expect(responseJson.country).to.eql('Colombia');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullAddress\": \"Carrera 15 #25-30\",\n  \"postalCode\": \"110111\",\n  \"city\": \"Bogotá\",\n  \"country\": \"Colombia\"\n}"
+        },
+        "url": {
+          "raw": "{{api_gateway_url}}/api/address",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "address"]
+        },
+        "description": "Agregar dirección al usuario"
+      }
+    },
+    {
+      "name": "5. Verify User Login (Get User by Username)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('User found by username', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('User data matches created user', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('userId');",
+              "    pm.expect(responseJson.firstName).to.eql('Juan');",
+              "    pm.expect(responseJson.lastName).to.eql('Pérez');",
+              "    pm.expect(responseJson.email).to.eql('juan.perez@email.com');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{api_gateway_url}}/api/users/username/juan.perez",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "users", "username", "juan.perez"]
+        },
+        "description": "Verificar que se puede encontrar el usuario por username (simula login)"
+      }
+    },
+    {
+      "name": "6. Get User Credentials",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Credentials found by username', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Credentials data is correct', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.username).to.eql('juan.perez');",
+              "    pm.expect(responseJson.isEnabled).to.be.true;",
+              "    pm.expect(responseJson.roleBasedAuthority).to.eql('ROLE_USER');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{api_gateway_url}}/api/credentials/username/juan.perez",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "credentials", "username", "juan.perez"]
+        },
+        "description": "Obtener credenciales del usuario por username"
+      }
+    },
+    {
+      "name": "7. Update User Profile",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('User profile updated successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Updated data is correct', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.phone).to.eql('+573009876543');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": {{userId}},\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Pérez\",\n  \"email\": \"juan.perez@email.com\",\n  \"phone\": \"+573009876543\",\n  \"birthDate\": \"1990-05-15\"\n}"
+        },
+        "url": {
+          "raw": "{{api_gateway_url}}/api/users/{{userId}}",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "users", "{{userId}}"]
+        },
+        "description": "Actualizar perfil del usuario"
+      }
+    },
+    {
+      "name": "8. Get All Users (Admin Function)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Users list retrieved successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains users collection', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('userDtos');",
+              "    pm.expect(responseJson.userDtos).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Created user is in the list', function () {",
+              "    const responseJson = pm.response.json();",
+              "    const users = responseJson.userDtos;",
+              "    const createdUser = users.find(user => user.email === 'juan.perez@email.com');",
+              "    pm.expect(createdUser).to.not.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{api_gateway_url}}/api/users",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "users"]
+        },
+        "description": "Obtener lista de todos los usuarios (función de administrador)"
+      }
+    }
+  ]
+}

@@ -31,8 +31,10 @@ import com.selimhorri.app.dto.response.collection.DtoCollectionResponse;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@Sql(scripts = {"classpath:schema-test.sql", "classpath:data-test.sql"}, 
+@Sql(scripts = {"classpath:data-test.sql"}, 
      executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = {"classpath:cleanup-test.sql"}, 
+     executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class ProductServiceIntegrationTest {
 
     @LocalServerPort

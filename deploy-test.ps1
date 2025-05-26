@@ -109,7 +109,7 @@ Write-Host "==============================================`nVerificando acceso a
 Write-Host "Configurando port-forwarding para acceso a los servicios..." -ForegroundColor Yellow
 
 Write-Host "`nPara acceder a Eureka (Service Discovery), ejecuta en una nueva ventana PowerShell:" -ForegroundColor Green
-Write-Host "kubectl port-forward svc/service-discovery 8761:8761" -ForegroundColor White
+Write-Host "kubectl port-forward svc/service-discovery 8761:8761 -n jenkins" -ForegroundColor White
 Write-Host "Luego navega a: http://localhost:8761" -ForegroundColor Cyan
 
 Write-Host "`nPara acceder a Zipkin, ejecuta en una nueva ventana PowerShell:" -ForegroundColor Green
@@ -117,7 +117,7 @@ Write-Host "kubectl port-forward svc/zipkin 9411:9411" -ForegroundColor White
 Write-Host "Luego navega a: http://localhost:9411" -ForegroundColor Cyan
 
 Write-Host "`nPara acceder al API Gateway, ejecuta en una nueva ventana PowerShell:" -ForegroundColor Green
-Write-Host "kubectl port-forward svc/api-gateway 9191:9191" -ForegroundColor White
+Write-Host "kubectl port-forward svc/api-gateway 8080:8080 -n jenkins" -ForegroundColor White
 Write-Host "Luego navega a: http://localhost:9191" -ForegroundColor Cyan
 
 Write-Host "`n==============================================`nDespliegue completado. Puedes usar los comandos indicados para acceder a las interfaces.`n==============================================" -ForegroundColor Magenta

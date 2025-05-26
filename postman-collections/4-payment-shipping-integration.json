@@ -1,0 +1,454 @@
+{
+    "info": {
+        "name": "E2E Test 4: Payment and Shipping Integration",
+        "description": "Comprehensive E2E test for payment processing and shipping management through API Gateway",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8080",
+            "type": "string"
+        },
+        {
+            "key": "user_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "order_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "payment_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "shipping_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "address_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "1. Health Check - API Gateway",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('API Gateway is healthy', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    pm.response.to.be.ok;",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/actuator/health",
+                    "host": ["{{base_url}}"],
+                    "path": ["actuator", "health"]
+                }
+            }
+        },
+        {
+            "name": "2. Create User for Payment Test",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('User created successfully', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('userId');",
+                            "    pm.expect(jsonData.firstName).to.eql('Alice');",
+                            "    pm.expect(jsonData.lastName).to.eql('Buyer');",
+                            "    pm.collectionVariables.set('user_id', jsonData.userId);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"firstName\": \"Alice\",\n    \"lastName\": \"Buyer\",\n    \"email\": \"alice.buyer@example.com\",\n    \"phone\": \"+1987654321\",\n    \"birthDate\": \"1985-08-20\",\n    \"imageUrl\": \"https://example.com/alice.jpg\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/users",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "users"]
+                }
+            }
+        },
+        {
+            "name": "3. Add Shipping Address",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Shipping address added successfully', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('addressId');",
+                            "    pm.expect(jsonData.fullAddress).to.eql('123 Main Street');",
+                            "    pm.expect(jsonData.city).to.eql('New York');",
+                            "    pm.collectionVariables.set('address_id', jsonData.addressId);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"fullAddress\": \"123 Main Street\",\n    \"postalCode\": \"10001\",\n    \"city\": \"New York\",\n    \"userId\": {{user_id}}\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/address",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "address"]
+                }
+            }
+        },
+        {
+            "name": "4. Create Order for Payment",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Order created successfully', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('orderId');",
+                            "    pm.expect(jsonData.userId).to.eql(parseInt(pm.collectionVariables.get('user_id')));",
+                            "    pm.expect(jsonData.orderTotal).to.eql(299.99);",
+                            "    pm.collectionVariables.set('order_id', jsonData.orderId);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"userId\": {{user_id}},\n    \"orderTotal\": 299.99,\n    \"orderStatus\": \"PENDING\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/orders",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "orders"]
+                }
+            }
+        },
+        {
+            "name": "5. Process Payment - Credit Card",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Payment processed successfully', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('paymentId');",
+                            "    pm.expect(jsonData.orderId).to.eql(parseInt(pm.collectionVariables.get('order_id')));",
+                            "    pm.expect(jsonData.paymentStatus).to.be.oneOf(['PROCESSING', 'COMPLETED', 'PENDING']);",
+                            "    pm.expect(jsonData.paymentMethod).to.eql('CREDIT_CARD');",
+                            "    pm.collectionVariables.set('payment_id', jsonData.paymentId);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"orderId\": {{order_id}},\n    \"paymentTotal\": 299.99,\n    \"paymentMethod\": \"CREDIT_CARD\",\n    \"paymentStatus\": \"PENDING\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/payments",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "payments"]
+                }
+            }
+        },
+        {
+            "name": "6. Verify Payment Status",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Payment details retrieved successfully', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('paymentId');",
+                            "    pm.expect(jsonData.paymentId).to.eql(parseInt(pm.collectionVariables.get('payment_id')));",
+                            "    pm.expect(jsonData.paymentTotal).to.eql(299.99);",
+                            "    pm.expect(jsonData.paymentMethod).to.eql('CREDIT_CARD');",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/payments/{{payment_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "payments", "{{payment_id}}"]
+                }
+            }
+        },
+        {
+            "name": "7. Update Payment Status to Completed",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Payment status updated successfully', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.paymentStatus).to.eql('COMPLETED');",
+                            "    pm.expect(jsonData.paymentId).to.eql(parseInt(pm.collectionVariables.get('payment_id')));",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"paymentId\": {{payment_id}},\n    \"orderId\": {{order_id}},\n    \"paymentTotal\": 299.99,\n    \"paymentMethod\": \"CREDIT_CARD\",\n    \"paymentStatus\": \"COMPLETED\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/payments/{{payment_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "payments", "{{payment_id}}"]
+                }
+            }
+        },
+        {
+            "name": "8. Create Shipping Record",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Shipping record created successfully', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('shippingId');",
+                            "    pm.expect(jsonData.orderId).to.eql(parseInt(pm.collectionVariables.get('order_id')));",
+                            "    pm.expect(jsonData.shippingCompany).to.eql('FedEx');",
+                            "    pm.expect(jsonData.shippingStatus).to.be.oneOf(['PENDING', 'PROCESSING']);",
+                            "    pm.collectionVariables.set('shipping_id', jsonData.shippingId);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"orderId\": {{order_id}},\n    \"shippingTrackingNumber\": \"FDX123456789\",\n    \"shippingCompany\": \"FedEx\",\n    \"shippingStatus\": \"PENDING\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/shippings",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "shippings"]
+                }
+            }
+        },
+        {
+            "name": "9. Track Shipping Status",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Shipping details retrieved successfully', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('shippingId');",
+                            "    pm.expect(jsonData.shippingId).to.eql(parseInt(pm.collectionVariables.get('shipping_id')));",
+                            "    pm.expect(jsonData.shippingTrackingNumber).to.eql('FDX123456789');",
+                            "    pm.expect(jsonData.shippingCompany).to.eql('FedEx');",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/shippings/{{shipping_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "shippings", "{{shipping_id}}"]
+                }
+            }
+        },
+        {
+            "name": "10. Update Shipping to In Transit",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Shipping status updated to in transit', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.shippingStatus).to.eql('IN_TRANSIT');",
+                            "    pm.expect(jsonData.shippingId).to.eql(parseInt(pm.collectionVariables.get('shipping_id')));",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"shippingId\": {{shipping_id}},\n    \"orderId\": {{order_id}},\n    \"shippingTrackingNumber\": \"FDX123456789\",\n    \"shippingCompany\": \"FedEx\",\n    \"shippingStatus\": \"IN_TRANSIT\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/shippings/{{shipping_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "shippings", "{{shipping_id}}"]
+                }
+            }
+        },
+        {
+            "name": "11. Update Shipping to Delivered",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Shipping status updated to delivered', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.shippingStatus).to.eql('DELIVERED');",
+                            "    pm.expect(jsonData.shippingId).to.eql(parseInt(pm.collectionVariables.get('shipping_id')));",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"shippingId\": {{shipping_id}},\n    \"orderId\": {{order_id}},\n    \"shippingTrackingNumber\": \"FDX123456789\",\n    \"shippingCompany\": \"FedEx\",\n    \"shippingStatus\": \"DELIVERED\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/shippings/{{shipping_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "shippings", "{{shipping_id}}"]
+                }
+            }
+        },
+        {
+            "name": "12. Verify Final Order Status",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Final order status verification', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('orderId');",
+                            "    pm.expect(jsonData.orderId).to.eql(parseInt(pm.collectionVariables.get('order_id')));",
+                            "    pm.expect(jsonData.userId).to.eql(parseInt(pm.collectionVariables.get('user_id')));",
+                            "    pm.expect(jsonData.orderTotal).to.eql(299.99);",
+                            "    console.log('Order completed successfully with payment and shipping!');",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/orders/{{order_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "orders", "{{order_id}}"]
+                }
+            }
+        }
+    ]
+}

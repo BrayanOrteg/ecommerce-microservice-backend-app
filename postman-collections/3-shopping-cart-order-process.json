@@ -1,0 +1,464 @@
+{
+    "info": {
+        "name": "E2E Test 3: Shopping Cart and Order Process",
+        "description": "Comprehensive E2E test for shopping cart management and order creation flow through API Gateway",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8080",
+            "type": "string"
+        },
+        {
+            "key": "user_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "cart_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "product_id_1",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "product_id_2",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "category_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "order_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "1. Health Check - API Gateway",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('API Gateway is healthy', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    pm.response.to.be.ok;",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/actuator/health",
+                    "host": ["{{base_url}}"],
+                    "path": ["actuator", "health"]
+                }
+            }
+        },
+        {
+            "name": "2. Create User for Shopping",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('User created successfully', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('userId');",
+                            "    pm.expect(jsonData.firstName).to.eql('John');",
+                            "    pm.expect(jsonData.lastName).to.eql('Shopper');",
+                            "    pm.collectionVariables.set('user_id', jsonData.userId);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Shopper\",\n    \"email\": \"john.shopper@example.com\",\n    \"phone\": \"+1234567890\",\n    \"birthDate\": \"1990-05-15\",\n    \"imageUrl\": \"https://example.com/avatar.jpg\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/users",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "users"]
+                }
+            }
+        },
+        {
+            "name": "3. Create Category for Products",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Category created successfully', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('categoryId');",
+                            "    pm.expect(jsonData.categoryTitle).to.eql('Electronics');",
+                            "    pm.collectionVariables.set('category_id', jsonData.categoryId);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"categoryTitle\": \"Electronics\",\n    \"imageUrl\": \"https://example.com/electronics.jpg\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/categories",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "categories"]
+                }
+            }
+        },
+        {
+            "name": "4. Create First Product",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('First product created successfully', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('productId');",
+                            "    pm.expect(jsonData.productTitle).to.eql('Laptop Dell XPS 13');",
+                            "    pm.expect(jsonData.productPrice).to.eql(1299.99);",
+                            "    pm.collectionVariables.set('product_id_1', jsonData.productId);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"productTitle\": \"Laptop Dell XPS 13\",\n    \"imageUrl\": \"https://example.com/laptop.jpg\",\n    \"sku\": \"DELL-XPS13-2024\",\n    \"productPrice\": 1299.99,\n    \"productQuantity\": 10,\n    \"categoryId\": {{category_id}}\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/products",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "products"]
+                }
+            }
+        },
+        {
+            "name": "5. Create Second Product",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Second product created successfully', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('productId');",
+                            "    pm.expect(jsonData.productTitle).to.eql('Wireless Mouse');",
+                            "    pm.expect(jsonData.productPrice).to.eql(29.99);",
+                            "    pm.collectionVariables.set('product_id_2', jsonData.productId);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"productTitle\": \"Wireless Mouse\",\n    \"imageUrl\": \"https://example.com/mouse.jpg\",\n    \"sku\": \"MOUSE-WRL-2024\",\n    \"productPrice\": 29.99,\n    \"productQuantity\": 50,\n    \"categoryId\": {{category_id}}\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/products",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "products"]
+                }
+            }
+        },
+        {
+            "name": "6. Create Shopping Cart",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Shopping cart created successfully', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('cartId');",
+                            "    pm.expect(jsonData.userId).to.eql(parseInt(pm.collectionVariables.get('user_id')));",
+                            "    pm.collectionVariables.set('cart_id', jsonData.cartId);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"userId\": {{user_id}}\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/carts",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "carts"]
+                }
+            }
+        },
+        {
+            "name": "7. Add First Product to Cart",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('First product added to cart successfully', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('cartId');",
+                            "    pm.expect(jsonData.productId).to.eql(parseInt(pm.collectionVariables.get('product_id_1')));",
+                            "    pm.expect(jsonData.quantity).to.eql(2);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"cartId\": {{cart_id}},\n    \"productId\": {{product_id_1}},\n    \"quantity\": 2\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/carts/{{cart_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "carts", "{{cart_id}}"]
+                }
+            }
+        },
+        {
+            "name": "8. Add Second Product to Cart",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Second product added to cart successfully', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('cartId');",
+                            "    pm.expect(jsonData.productId).to.eql(parseInt(pm.collectionVariables.get('product_id_2')));",
+                            "    pm.expect(jsonData.quantity).to.eql(1);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"cartId\": {{cart_id}},\n    \"productId\": {{product_id_2}},\n    \"quantity\": 1\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/carts/{{cart_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "carts", "{{cart_id}}"]
+                }
+            }
+        },
+        {
+            "name": "9. View Cart Contents",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Cart contents retrieved successfully', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('cartId');",
+                            "    pm.expect(jsonData.cartId).to.eql(parseInt(pm.collectionVariables.get('cart_id')));",
+                            "    pm.expect(jsonData.userId).to.eql(parseInt(pm.collectionVariables.get('user_id')));",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/carts/{{cart_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "carts", "{{cart_id}}"]
+                }
+            }
+        },
+        {
+            "name": "10. Create Order from Cart",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Order created successfully from cart', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('orderId');",
+                            "    pm.expect(jsonData.userId).to.eql(parseInt(pm.collectionVariables.get('user_id')));",
+                            "    pm.expect(jsonData.orderStatus).to.be.oneOf(['PENDING', 'CREATED']);",
+                            "    pm.collectionVariables.set('order_id', jsonData.orderId);",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"userId\": {{user_id}},\n    \"orderTotal\": 2629.97,\n    \"orderStatus\": \"PENDING\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/orders",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "orders"]
+                }
+            }
+        },
+        {
+            "name": "11. Verify Order Details",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Order details retrieved successfully', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('orderId');",
+                            "    pm.expect(jsonData.orderId).to.eql(parseInt(pm.collectionVariables.get('order_id')));",
+                            "    pm.expect(jsonData.userId).to.eql(parseInt(pm.collectionVariables.get('user_id')));",
+                            "    pm.expect(jsonData.orderTotal).to.be.a('number');",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/orders/{{order_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "orders", "{{order_id}}"]
+                }
+            }
+        },
+        {
+            "name": "12. Update Order Status",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Order status updated successfully', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('orderId');",
+                            "    pm.expect(jsonData.orderStatus).to.eql('CONFIRMED');",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"orderId\": {{order_id}},\n    \"userId\": {{user_id}},\n    \"orderTotal\": 2629.97,\n    \"orderStatus\": \"CONFIRMED\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/orders/{{order_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "orders", "{{order_id}}"]
+                }
+            }
+        }
+    ]
+}

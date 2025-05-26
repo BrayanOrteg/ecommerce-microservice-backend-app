@@ -1,3 +1,7 @@
+-- Limpiar datos existentes antes de insertar datos de prueba
+DELETE FROM products;
+DELETE FROM categories;
+
 -- Insertar datos de prueba para categorías
 INSERT INTO categories (category_id, category_title, image_url, parent_category_id) VALUES
 (1, 'Electronics', 'http://example.com/electronics.jpg', NULL),

@@ -1,0 +1,456 @@
+{
+  "info": {
+    "name": "E2E Test 2: Product Catalog and Category Management",
+    "description": "Flujo completo de gestión de productos y categorías, navegación de catálogo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "api_gateway_url",
+      "value": "{{API_GATEWAY_URL}}",
+      "type": "string",
+      "description": "URL del API Gateway"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productId2",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.environment.get('API_GATEWAY_URL') && !pm.globals.get('API_GATEWAY_URL')) {",
+          "    pm.globals.set('API_GATEWAY_URL', 'http://localhost:9191');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check API Gateway",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('API Gateway está disponible', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{api_gateway_url}}/actuator/health",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["actuator", "health"]
+        }
+      }
+    },
+    {
+      "name": "2. Create Electronics Category",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Category created successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains category data', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('categoryId');",
+              "    pm.expect(responseJson).to.have.property('categoryTitle');",
+              "    pm.expect(responseJson).to.have.property('imageUrl');",
+              "    ",
+              "    pm.collectionVariables.set('categoryId', responseJson.categoryId);",
+              "});",
+              "",
+              "pm.test('Category data is correct', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.categoryTitle).to.eql('Electronics');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryTitle\": \"Electronics\",\n  \"imageUrl\": \"https://example.com/electronics.jpg\"\n}"
+        },
+        "url": {
+          "raw": "{{api_gateway_url}}/api/categories",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "categories"]
+        },
+        "description": "Crear categoría de Electrónicos"
+      }
+    },
+    {
+      "name": "3. Create Smartphone Product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Product created successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains product data', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('productId');",
+              "    pm.expect(responseJson).to.have.property('productTitle');",
+              "    pm.expect(responseJson).to.have.property('sku');",
+              "    pm.expect(responseJson).to.have.property('priceUnit');",
+              "    ",
+              "    pm.collectionVariables.set('productId', responseJson.productId);",
+              "});",
+              "",
+              "pm.test('Product data is correct', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.productTitle).to.eql('iPhone 15 Pro');",
+              "    pm.expect(responseJson.sku).to.eql('IPH15PRO001');",
+              "    pm.expect(responseJson.priceUnit).to.eql(1299.99);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productTitle\": \"iPhone 15 Pro\",\n  \"imageUrl\": \"https://example.com/iphone15pro.jpg\",\n  \"sku\": \"IPH15PRO001\",\n  \"priceUnit\": 1299.99,\n  \"quantity\": 50,\n  \"categoryId\": {{categoryId}}\n}"
+        },
+        "url": {
+          "raw": "{{api_gateway_url}}/api/products",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "products"]
+        },
+        "description": "Crear producto iPhone 15 Pro"
+      }
+    },
+    {
+      "name": "4. Create Samsung Product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Second product created successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains product data', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('productId');",
+              "    pm.collectionVariables.set('productId2', responseJson.productId);",
+              "});",
+              "",
+              "pm.test('Product data is correct', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.productTitle).to.eql('Samsung Galaxy S24 Ultra');",
+              "    pm.expect(responseJson.priceUnit).to.eql(1199.99);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productTitle\": \"Samsung Galaxy S24 Ultra\",\n  \"imageUrl\": \"https://example.com/galaxys24ultra.jpg\",\n  \"sku\": \"SAM24ULTRA001\",\n  \"priceUnit\": 1199.99,\n  \"quantity\": 30,\n  \"categoryId\": {{categoryId}}\n}"
+        },
+        "url": {
+          "raw": "{{api_gateway_url}}/api/products",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "products"]
+        },
+        "description": "Crear producto Samsung Galaxy S24 Ultra"
+      }
+    },
+    {
+      "name": "5. Get All Categories",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Categories retrieved successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains categories collection', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('categoryDtos');",
+              "    pm.expect(responseJson.categoryDtos).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Electronics category is in the list', function () {",
+              "    const responseJson = pm.response.json();",
+              "    const categories = responseJson.categoryDtos;",
+              "    const electronicsCategory = categories.find(cat => cat.categoryTitle === 'Electronics');",
+              "    pm.expect(electronicsCategory).to.not.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{api_gateway_url}}/api/categories",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "categories"]
+        },
+        "description": "Obtener todas las categorías disponibles"
+      }
+    },
+    {
+      "name": "6. Get All Products",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Products retrieved successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains products collection', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('productDtos');",
+              "    pm.expect(responseJson.productDtos).to.be.an('array');",
+              "    pm.expect(responseJson.productDtos.length).to.be.at.least(2);",
+              "});",
+              "",
+              "pm.test('Created products are in the catalog', function () {",
+              "    const responseJson = pm.response.json();",
+              "    const products = responseJson.productDtos;",
+              "    const iphone = products.find(p => p.productTitle === 'iPhone 15 Pro');",
+              "    const samsung = products.find(p => p.productTitle === 'Samsung Galaxy S24 Ultra');",
+              "    ",
+              "    pm.expect(iphone).to.not.be.undefined;",
+              "    pm.expect(samsung).to.not.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{api_gateway_url}}/api/products",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "products"]
+        },
+        "description": "Navegar catálogo completo de productos"
+      }
+    },
+    {
+      "name": "7. Get Product Details by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Product details retrieved successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Product details are complete', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('productId');",
+              "    pm.expect(responseJson).to.have.property('productTitle');",
+              "    pm.expect(responseJson).to.have.property('sku');",
+              "    pm.expect(responseJson).to.have.property('priceUnit');",
+              "    pm.expect(responseJson).to.have.property('quantity');",
+              "});",
+              "",
+              "pm.test('Product details match expected iPhone', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.productTitle).to.eql('iPhone 15 Pro');",
+              "    pm.expect(responseJson.sku).to.eql('IPH15PRO001');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{api_gateway_url}}/api/products/{{productId}}",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "products", "{{productId}}"]
+        },
+        "description": "Ver detalles específicos de un producto"
+      }
+    },
+    {
+      "name": "8. Update Product Price",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Product updated successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Price updated correctly', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.priceUnit).to.eql(1249.99);",
+              "});",
+              "",
+              "pm.test('Other product data remains unchanged', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.productTitle).to.eql('iPhone 15 Pro');",
+              "    pm.expect(responseJson.sku).to.eql('IPH15PRO001');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": {{productId}},\n  \"productTitle\": \"iPhone 15 Pro\",\n  \"imageUrl\": \"https://example.com/iphone15pro.jpg\",\n  \"sku\": \"IPH15PRO001\",\n  \"priceUnit\": 1249.99,\n  \"quantity\": 50,\n  \"categoryId\": {{categoryId}}\n}"
+        },
+        "url": {
+          "raw": "{{api_gateway_url}}/api/products/{{productId}}",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "products", "{{productId}}"]
+        },
+        "description": "Actualizar precio del iPhone (descuento)"
+      }
+    },
+    {
+      "name": "9. Search Category by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Category found by ID', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Category data is correct', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.categoryTitle).to.eql('Electronics');",
+              "    pm.expect(responseJson.categoryId).to.eql(parseInt(pm.collectionVariables.get('categoryId')));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{api_gateway_url}}/api/categories/{{categoryId}}",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "categories", "{{categoryId}}"]
+        },
+        "description": "Buscar categoría específica por ID"
+      }
+    },
+    {
+      "name": "10. Verify Product Inventory",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Product inventory is available', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Product has stock available', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.quantity).to.be.greaterThan(0);",
+              "    pm.expect(responseJson.quantity).to.eql(50);",
+              "});",
+              "",
+              "pm.test('Product price is updated', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.priceUnit).to.eql(1249.99);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{api_gateway_url}}/api/products/{{productId}}",
+          "host": ["{{api_gateway_url}}"],
+          "path": ["api", "products", "{{productId}}"]
+        },
+        "description": "Verificar inventario del producto actualizado"
+      }
+    }
+  ]
+}
