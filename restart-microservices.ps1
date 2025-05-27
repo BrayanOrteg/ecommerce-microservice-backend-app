@@ -31,6 +31,7 @@ function Test-PodReady {
 
 # Lista de microservicios para reiniciar
 $microservices = @(
+    "cloud-config",
     "user-service",
     "product-service",
     "order-service",
@@ -38,6 +39,7 @@ $microservices = @(
     "shipping-service",
     "favourite-service",
     "proxy-client"
+    
 )
 
 Write-Host "`n==============================================`nReiniciando microservicios`n==============================================" -ForegroundColor Cyan
@@ -46,7 +48,7 @@ foreach ($service in $microservices) {
     Write-Host "Reiniciando $service para asegurar registro en Eureka..." -ForegroundColor Yellow
     
     # Reiniciar el deployment
-    kubectl rollout restart deployment $service -n jenkins
+    kubectl rollout restart deployment $service 
     
     # Esperar un momento entre reinicios para no sobrecargar el sistema
     Start-Sleep -Seconds 2

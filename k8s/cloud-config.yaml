@@ -47,14 +47,6 @@ spec:
               value: "http://service-discovery:8761/eureka/"
             - name: EUREKA_INSTANCE
               value: "cloud-config"
-        # Sidecar container para redirigir localhost:8761 a service-discovery:8761
-        - name: eureka-proxy
-          image: alpine/socat
-          args:
-            - -d
-            - -d
-            - TCP-LISTEN:8761,fork,reuseaddr
-            - TCP:service-discovery:8761
           readinessProbe:
             httpGet:
               path: /actuator/health

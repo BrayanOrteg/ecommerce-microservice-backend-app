@@ -2,10 +2,6 @@
 
 Write-Host "==============================================`nIniciando prueba completa de despliegue`n==============================================" -ForegroundColor Cyan
 
-# Detener y eliminar Minikube si ya está en ejecución
-Write-Host "Deteniendo y eliminando Minikube existente (si existe)..." -ForegroundColor Yellow
-minikube delete
-
 # Iniciar un nuevo Minikube
 Write-Host "Iniciando un nuevo Minikube..." -ForegroundColor Yellow
 minikube start --cpus=no-limit --memory=no-limit
@@ -22,16 +18,6 @@ minikube status
 # Cambiar al directorio de los manifiestos de Kubernetes
 cd k8s
 
-write-host "==============================================`nCreando entorno de Jenkins`n==============================================" -ForegroundColor Cyan
-
-# Crear un namespace para Jenkins
-Write-Host "Creando namespace para Jenkins..." -ForegroundColor Yellow
-kubectl create namespace jenkins
-
-kubectl apply -f jenkins-pv.yaml -n jenkins
-kubectl apply -f jenkins-rbac.yaml -n jenkins
-kubectl apply -f jenkins-deployment.yaml -n jenkins
-kubectl apply -f jenkins-rbac-default.yaml
 
 Write-Host "==============================================`nDesplegando servicios base`n==============================================" -ForegroundColor Cyan
 
