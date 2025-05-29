@@ -22,7 +22,8 @@ pipeline {
                 
                 # Configurar PATH
                 export PATH=$HOME/bin:$PATH
-                  # Instalar kubectl
+                
+                # Instalar kubectl
                 echo "Verificando kubectl"
                 if ! command -v kubectl &> /dev/null; then
                     echo "Instalando kubectl"
@@ -36,21 +37,7 @@ pipeline {
                 echo "Verificando Java..."
                 java -version
                 javac -version
-                
-                # Instalar Java 11 para Maven (el proyecto requiere Java 11)
-                echo "Instalando Java 11 para Maven..."
-                if [ ! -d "$HOME/java11" ]; then
-                    cd /tmp
-                    curl -L -o openjdk-11.tar.gz https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz                    tar -xzf openjdk-11.tar.gz
-                    mv jdk-11.0.2 $HOME/java11
-                    cd -
-                fi
-                
-                # Configurar JAVA_HOME para Maven
-                export JAVA_HOME=$HOME/java11
-                export PATH=$JAVA_HOME/bin:$PATH
-                
-                # Instalar Maven si no está disponible
+                  # Instalar Maven si no está disponible
                 echo "Verificando Maven..."
                 if ! command -v mvn &> /dev/null; then
                     echo "Instalando Maven..."
@@ -65,8 +52,7 @@ pipeline {
                 
                 # Verificar Maven
                 mvn --version
-                
-                # Descargar e instalar Node.js binario (sin apt-get)
+                  # Descargar e instalar Node.js binario (sin apt-get)
                 echo "Instalando Node.js binario..."
                 if ! command -v node &> /dev/null; then
                     cd /tmp
@@ -84,64 +70,44 @@ pipeline {
                 
                 # Instalar newman
                 echo "Instalando newman..."
-                npm install -g newman                newman --version
+                npm install -g newman
+                newman --version
                 
-                # Instalar Python packages usando virtual environment (externally-managed-environment fix)
-                echo "Instalando python3-venv y locust..."
-                # Instalar python3-venv específico para la versión de Python disponible
-                echo "Detectando versión de Python..."
-                PYTHON_VERSION=$(python3 --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1,2)
-                echo "Versión detectada: $PYTHON_VERSION"
-                
-                # Instalar paquetes necesarios
-                apt-get update && apt-get install -y python3-venv python3-pip python3-dev build-essential
-                
-                # Crear entorno virtual
-                echo "Creando entorno virtual..."
-                python3 -m venv $HOME/venv
-                source $HOME/venv/bin/activate
-                
-                # Actualizar pip e instalar locust
-                pip install --upgrade pip
-                pip install locust
-                echo 'source $HOME/venv/bin/activate' >> ~/.bashrc
+                # Instalar Python packages usando --user (sin permisos de root)
+                echo "Instalando locust..."
+                python3 -m pip install --user locust || pip3 install --user locust
                 
                 # Verificar instalaciones finales
                 echo "=== RESUMEN DE HERRAMIENTAS INSTALADAS ==="
                 kubectl version --client
-                echo "Java para Maven (debería ser Java 11):"
-                export JAVA_HOME=$HOME/java11
-                export PATH=$JAVA_HOME/bin:$PATH
-                java -version
                 mvn --version
                 node --version
                 npm --version
                 newman --version
-                source $HOME/venv/bin/activate && python3 -m locust --version || echo "Locust pendiente de verificar en entorno virtual"
+                python3 -m locust --version || echo "Locust pendiente de verificar en PATH"
                 echo "============================================"
                 '''
             }
         }
         
-        stage('Ejecutar Pruebas Unitarias') {            when {
+        stage('Ejecutar Pruebas Unitarias') {
+            when {
                 anyOf {
                     environment name: 'SELECTED_ENV', value: 'stage'
                 }
             }
             steps {
                 sh '''
-                # Configurar PATH con todas las herramientas y JAVA_HOME para Java 11
-                export JAVA_HOME=$HOME/java11
-                export PATH=$JAVA_HOME/bin:$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
-                
+                # Configurar PATH con todas las herramientas
+                export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
+        
                 echo "Ejecutando pruebas unitarias en el servicio de productos"
-                echo "Usando Java: $(java -version 2>&1 | head -1)"
                 cd product-service
-                
+        
                 # Limpiar target anterior
                 rm -rf target/
-                
-                # Usar Maven con configuraciones específicas para Java 11
+        
+                # Usar Maven con configuraciones específicas para evitar problemas de Java
                 mvn clean test -Dmaven.compiler.source=11 -Dmaven.compiler.target=11 -Dmaven.test.failure.ignore=true
         
                 cd ..
@@ -153,7 +119,8 @@ pipeline {
                 }
             }
         }
-          stage('Ejecutar Pruebas de Integración') {
+        
+        stage('Ejecutar Pruebas de Integración') {
             when {
                 anyOf {
                     environment name: 'SELECTED_ENV', value: 'stage'
@@ -161,13 +128,11 @@ pipeline {
             }
             steps {
                 sh '''
-                # Configurar PATH y JAVA_HOME para Java 11
-                export JAVA_HOME=$HOME/java11
-                export PATH=$JAVA_HOME/bin:$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
-                
+                # Configurar PATH
+                export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
+        
                 echo "Ejecutando pruebas de integración en los microservicios"
-                echo "Usando Java: $(java -version 2>&1 | head -1)"
-                
+        
                 # Ejecutar pruebas de integración en product-service
                 cd product-service
                 mvn test -Dtest=*Integration* -Dmaven.compiler.source=11 -Dmaven.compiler.target=11 -Dmaven.test.failure.ignore=true
@@ -203,14 +168,13 @@ pipeline {
                 sleep 90 # Dar tiempo para que se inicie
                 '''
                 
-                // Desplegar Cloud Config                sh '''
+                // Desplegar Cloud Config
+                sh '''
                 export PATH=$HOME/bin:$PATH
-                
                 echo "Desplegando Cloud Config..."
                 kubectl apply -f k8s/cloud-config.yaml
                 echo "Esperando a que Cloud Config esté disponible..."
-                sleep 60 # Dar tiempo para que se inicie
-                '''
+                sleep 60 # Dar tiempo para que se inicie                '''
             }
         }
         
@@ -232,12 +196,12 @@ pipeline {
                 kubectl apply -f k8s/product-service.yaml
                 kubectl apply -f k8s/shipping-service.yaml
                 kubectl apply -f k8s/user-service.yaml
-                kubectl apply -f k8s/favourite-service.yaml                kubectl apply -f k8s/proxy-client.yaml
+                kubectl apply -f k8s/favourite-service.yaml
+                kubectl apply -f k8s/proxy-client.yaml
                 
                 # Esperar a que los servicios estén disponibles
                 echo "Esperando a que los servicios estén disponibles..."
-                sleep 60
-                '''
+                sleep 60                '''
             }
         }
           stage('Verificar Despliegue') {
@@ -357,16 +321,16 @@ pipeline {
                     
                     try {
                         // Ejecutar tests de Locust
-                        sh '''                        # Configurar PATH y activar entorno virtual Python
-                        export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
-                        source $HOME/venv/bin/activate
-                          echo "Esperando a que el port-forward esté listo..."
+                        sh '''
+                        # Configurar PATH
+                        export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$HOME/.local/bin:$PATH
+                        
+                        echo "Esperando a que el port-forward esté listo..."
                         sleep 15
                         
                         echo "Instalando dependencias de Locust..."
                         cd locust
-                        source $HOME/venv/bin/activate
-                        pip install -r requirements.txt
+                        python3 -m pip install --user -r requirements.txt
                         
                         echo "Ejecutando pruebas de carga con Locust..."
                         python3 -m locust -f locustfile.py --headless -u 5 -r 2 -t 30s --csv=load_test_report
