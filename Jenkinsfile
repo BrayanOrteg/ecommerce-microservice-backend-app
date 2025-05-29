@@ -351,10 +351,6 @@ pipeline {
                         echo "Esperando a que el port-forward esté listo..."
                         sleep 15
                         
-                        echo "Instalando dependencias de Locust..."
-                        cd locust
-                        python3 -m pip install --user -r requirements.txt
-                        
                         echo "Ejecutando pruebas de carga con Locust..."
                         python3 -m locust -f locustfile.py --headless -u 5 -r 2 -t 30s --csv=load_test_report
                         

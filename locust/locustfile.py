@@ -4,7 +4,7 @@ class EcommerceLoadTest(HttpUser):
     wait_time = between(1, 5)  # Wait time between tasks
 
     # Define the base host for the API Gateway
-    host = "http://localhost:8080/"
+    host = "http://api-gateway:8080/"
 
     @task
     def get_users(self):
