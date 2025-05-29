@@ -22,15 +22,15 @@ pipeline {
                 
                 # Configurar PATH
                 export PATH=$HOME/bin:$PATH
-                
-                # Instalar kubectl
+                  # Instalar kubectl
                 echo "Verificando kubectl"
                 if ! command -v kubectl &> /dev/null; then
                     echo "Instalando kubectl"
                     mkdir -p $HOME/bin
                     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
                     chmod +x kubectl && mv kubectl $HOME/bin/
-                    echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc                fi
+                    echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
+                fi
                 
                 # Verificar Java version
                 echo "Verificando Java..."
@@ -41,12 +41,12 @@ pipeline {
                 echo "Instalando Java 11 para Maven..."
                 if [ ! -d "$HOME/java11" ]; then
                     cd /tmp
-                    curl -L -o openjdk-11.tar.gz https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz
-                    tar -xzf openjdk-11.tar.gz
+                    curl -L -o openjdk-11.tar.gz https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz                    tar -xzf openjdk-11.tar.gz
                     mv jdk-11.0.2 $HOME/java11
                     cd -
                 fi
-                  # Configurar JAVA_HOME para Maven
+                
+                # Configurar JAVA_HOME para Maven
                 export JAVA_HOME=$HOME/java11
                 export PATH=$JAVA_HOME/bin:$PATH
                 
@@ -84,9 +84,9 @@ pipeline {
                 
                 # Instalar newman
                 echo "Instalando newman..."
-                npm install -g newman
-                newman --version
-                  # Instalar Python packages usando virtual environment (externally-managed-environment fix)
+                npm install -g newman                newman --version
+                
+                # Instalar Python packages usando virtual environment (externally-managed-environment fix)
                 echo "Instalando python3-venv y locust..."
                 # Instalar python3-venv específico para la versión de Python disponible
                 echo "Detectando versión de Python..."
@@ -123,20 +123,22 @@ pipeline {
             }
         }
         
-        stage('Ejecutar Pruebas Unitarias') {
-            when {
+        stage('Ejecutar Pruebas Unitarias') {            when {
                 anyOf {
                     environment name: 'SELECTED_ENV', value: 'stage'
                 }
             }
-            steps {                sh '''
+            steps {
+                sh '''
                 # Configurar PATH con todas las herramientas y JAVA_HOME para Java 11
                 export JAVA_HOME=$HOME/java11
                 export PATH=$JAVA_HOME/bin:$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
-        
+                
                 echo "Ejecutando pruebas unitarias en el servicio de productos"
                 echo "Usando Java: $(java -version 2>&1 | head -1)"
-                cd product-service                # Limpiar target anterior
+                cd product-service
+                
+                # Limpiar target anterior
                 rm -rf target/
                 
                 # Usar Maven con configuraciones específicas para Java 11
@@ -201,9 +203,10 @@ pipeline {
                 sleep 90 # Dar tiempo para que se inicie
                 '''
                 
-                // Desplegar Cloud Config
-                sh '''
-                export PATH=$HOME/bin:$PATH                echo "Desplegando Cloud Config..."
+                // Desplegar Cloud Config                sh '''
+                export PATH=$HOME/bin:$PATH
+                
+                echo "Desplegando Cloud Config..."
                 kubectl apply -f k8s/cloud-config.yaml
                 echo "Esperando a que Cloud Config esté disponible..."
                 sleep 60 # Dar tiempo para que se inicie
@@ -229,9 +232,9 @@ pipeline {
                 kubectl apply -f k8s/product-service.yaml
                 kubectl apply -f k8s/shipping-service.yaml
                 kubectl apply -f k8s/user-service.yaml
-                kubectl apply -f k8s/favourite-service.yaml
-                kubectl apply -f k8s/proxy-client.yaml
-                  # Esperar a que los servicios estén disponibles
+                kubectl apply -f k8s/favourite-service.yaml                kubectl apply -f k8s/proxy-client.yaml
+                
+                # Esperar a que los servicios estén disponibles
                 echo "Esperando a que los servicios estén disponibles..."
                 sleep 60
                 '''
