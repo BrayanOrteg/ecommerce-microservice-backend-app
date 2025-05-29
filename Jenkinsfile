@@ -318,7 +318,7 @@ pipeline {
                 environment name: 'SELECTED_ENV', value: 'prod'
             }
             steps {
-                withCredentials([string(credentialsId: 'github-token', variable: 'GH_TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
                     script {
                         def now = new Date()
                         def tag = "v${now.format('yyyy.MM.dd.HHmm')}"
@@ -338,38 +338,38 @@ pipeline {
                             
                             # Crear release con notas
                             gh release create ${tag} --generate-notes --title "${title}" --notes "
-        # 🚀 Release Notes - ${tag}
-        
-        **📅 Fecha:** ${now.format('yyyy-MM-dd HH:mm:ss')}  
-        **👤 Responsable:** Jenkins CI  
-        **🔗 Build:** #${env.BUILD_NUMBER}  
-        **🔑 Commit:** ${commitHash}  
-        
-        ## 📋 **Resumen del Release**
-        Despliegue automático del sistema de ecommerce con microservicios en ambiente de producción.
-        
-        ## 🆕 **Último Cambio**
-        ${commitMessage}
-        
-        ## ✅ **Validaciones Realizadas**
-        - ✅ Pruebas End-to-End ejecutadas exitosamente
-        - ✅ Verificación de conectividad entre microservicios  
-        - ✅ Validación de endpoints principales
-        - ✅ Confirmación de registro en Eureka
-        
-        ## 🏗️ **Servicios Desplegados**
-        - API Gateway (Puerto 8080)
-        - Service Discovery - Eureka (Puerto 8761)  
-        - Zipkin Tracing (Puerto 9411)
-        - Microservicios: Product, Order, Payment, User, Shipping, Favourite
-        
-        ## 🚨 **Información Importante**
-        - Los servicios pueden tardar 2-3 minutos en estar completamente operativos
-        - Verificar conectividad de red antes de acceder a los endpoints
-        - En caso de problemas, contactar al equipo DevOps
-        
-        **📞 Contacto:** devops-team@empresa.com
-        "
+# 🚀 Release Notes - ${tag}
+
+**📅 Fecha:** ${now.format('yyyy-MM-dd HH:mm:ss')}  
+**👤 Responsable:** Jenkins CI  
+**🔗 Build:** #${env.BUILD_NUMBER}  
+**🔑 Commit:** ${commitHash}  
+
+## 📋 **Resumen del Release**
+Despliegue automático del sistema de ecommerce con microservicios en ambiente de producción.
+
+## 🆕 **Último Cambio**
+${commitMessage}
+
+## ✅ **Validaciones Realizadas**
+- ✅ Pruebas End-to-End ejecutadas exitosamente
+- ✅ Verificación de conectividad entre microservicios  
+- ✅ Validación de endpoints principales
+- ✅ Confirmación de registro en Eureka
+
+## 🏗️ **Servicios Desplegados**
+- API Gateway (Puerto 8080)
+- Service Discovery - Eureka (Puerto 8761)  
+- Zipkin Tracing (Puerto 9411)
+- Microservicios: Product, Order, Payment, User, Shipping, Favourite
+
+## 🚨 **Información Importante**
+- Los servicios pueden tardar 2-3 minutos en estar completamente operativos
+- Verificar conectividad de red antes de acceder a los endpoints
+- En caso de problemas, contactar al equipo DevOps
+
+**📞 Contacto:** devops-team@empresa.com
+"
                         """
                         
                         echo "✅ Release ${tag} creado exitosamente"
