@@ -29,15 +29,36 @@ pipeline {
                   echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
                 }
                 
+                # Instalar Node.js y npm si no están instalados
+                echo "Verificando Node.js..."
+                if ! command -v node &> /dev/null; then
+                    echo "Instalando Node.js..."
+                    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+                    apt-get install -y nodejs
+                fi
+                
+                # Verificar versiones
+                node --version || echo "Node.js no disponible"
+                npm --version || echo "npm no disponible"
+                
                 # Instalar newman para tests E2E si no está instalado
                 which newman || {
                     echo "Instalando newman para tests E2E"
                     npm install -g newman
                 }
                 
-                # Instalar python y locust si no están instalados
-                which python3 || which python || {
-                    echo "Python no encontrado. Asegúrate de que Python esté instalado."
+                # Instalar python y pip si no están instalados
+                echo "Verificando Python..."
+                if ! command -v python3 &> /dev/null && ! command -v python &> /dev/null; then
+                    echo "Instalando Python..."
+                    apt-get update
+                    apt-get install -y python3 python3-pip
+                fi
+                
+                # Verificar pip
+                pip3 --version || pip --version || {
+                    echo "Instalando pip..."
+                    apt-get install -y python3-pip
                 }
                 '''
             }
