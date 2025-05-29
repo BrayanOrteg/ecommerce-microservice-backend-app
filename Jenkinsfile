@@ -298,44 +298,18 @@ pipeline {
                 }
             }
             steps {
-                script {
-                    // Iniciar port-forward en background
-                    def portForwardProcess = sh(
-                        script: '''
-                        export PATH=$HOME/bin:$PATH
-                        echo "Iniciando port-forward para API Gateway..."
-                        nohup kubectl port-forward svc/api-gateway 8080:8080 > port-forward.log 2>&1 &
-                        echo $! > port-forward.pid
-                        sleep 10
-                        echo "Port-forward iniciado"
-                        ''',
-                        returnStdout: false
-                    )
-                    
-                    try {
-                        // Ejecutar tests E2E
-                        sh '''
-                        echo "Esperando a que el port-forward esté listo..."
-                        sleep 15
-                        
-                        echo "Ejecutando pruebas E2E..."
-                        cd postman-collections
-                        newman run "E2E-tests.postman_collection.json"
-                        cd ..
-                        '''
-                    } finally {
-                        // Limpiar port-forward
-                        sh '''
-                        echo "Terminando port-forward..."
-                        if [ -f port-forward.pid ]; then
-                            PID=$(cat port-forward.pid)
-                            kill $PID || echo "Port-forward ya había terminado"
-                            rm -f port-forward.pid
-                        fi
-                        pkill -f "kubectl port-forward svc/api-gateway" || echo "No hay procesos port-forward activos"
-                        '''
-                    }
-                }
+                sh '''
+                # Configurar PATH para incluir Node.js y newman
+                export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
+        
+                echo "Verificando que newman esté disponible..."
+                newman --version
+        
+                echo "Ejecutando pruebas E2E..."
+                cd postman-collections
+                newman run "E2E-tests.postman_collection.json"
+                cd ..
+                '''
             }
         }
         
@@ -346,50 +320,18 @@ pipeline {
                 }
             }
             steps {
-                script {
-                    // Iniciar port-forward en background
-                    def portForwardProcess = sh(
-                        script: '''
-                        export PATH=$HOME/bin:$PATH
-                        echo "Iniciando port-forward para API Gateway (Locust)..."
-                        nohup kubectl port-forward svc/api-gateway 8080:8080 > port-forward-locust.log 2>&1 &
-                        echo $! > port-forward-locust.pid
-                        sleep 10
-                        echo "Port-forward para Locust iniciado"
-                        ''',
-                        returnStdout: false
-                    )
-                    
-                    try {
-                        // Ejecutar tests de Locust
-                        sh '''
-                        # Configurar PATH
-                        export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$HOME/.local/bin:$PATH
-                        
-                        echo "Esperando a que el port-forward esté listo..."
-                        sleep 15
-                        
-                        echo "Ejecutando pruebas de carga con Locust..."
-                        cd locust
-                        python3 -m locust -f locustfile.py --headless -u 5 -r 2 -t 30s --csv=load_test_report
-                        
-                        echo "Pruebas de Locust completadas"
-                        ls -la *.csv
-                        cd ..
-                        '''
-                    } finally {
-                        // Limpiar port-forward
-                        sh '''
-                        echo "Terminando port-forward de Locust..."
-                        if [ -f port-forward-locust.pid ]; then
-                            PID=$(cat port-forward-locust.pid)
-                            kill $PID || echo "Port-forward de Locust ya había terminado"
-                            rm -f port-forward-locust.pid
-                        fi
-                        pkill -f "kubectl port-forward svc/api-gateway" || echo "No hay procesos port-forward activos"
-                        '''
-                    }
-                }
+                sh '''
+                # Configurar PATH
+                export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$HOME/.local/bin:$PATH
+        
+                echo "Ejecutando pruebas de carga con Locust..."
+                cd locust
+                python3 -m locust -f locustfile.py --headless -u 5 -r 2 -t 30s --csv=load_test_report
+        
+                echo "Pruebas de Locust completadas"
+                ls -la *.csv
+                cd ..
+                '''
             }
             post {
                 always {
@@ -402,13 +344,6 @@ pipeline {
       post {
         always {
             echo "Limpiando espacio de trabajo..."
-            
-            // Limpiar cualquier port-forward que pueda haber quedado
-            sh '''
-            echo "Limpiando port-forwards restantes..."
-            pkill -f "kubectl port-forward" || echo "No hay port-forwards activos"
-            rm -f port-forward*.pid port-forward*.log || echo "No hay archivos de port-forward para limpiar"
-            '''
             
             catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                 cleanWs()
@@ -438,17 +373,8 @@ pipeline {
             echo "El API Gateway está disponible a través del servicio api-gateway."
         }
         failure {
-            script {
-                echo "Pipeline falló en ambiente: ${env.SELECTED_ENV}"
-                echo "Revisa los logs para más detalles."
-                
-                // Limpiar port-forwards en caso de fallo
-                sh '''
-                echo "Limpiando port-forwards debido a fallo..."
-                pkill -f "kubectl port-forward" || echo "No hay port-forwards activos"
-                rm -f port-forward*.pid port-forward*.log || echo "No hay archivos de port-forward para limpiar"
-                '''
-            }
+            echo "Pipeline falló en ambiente: ${env.SELECTED_ENV}"
+            echo "Revisa los logs para más detalles."
         }
     }
 }
