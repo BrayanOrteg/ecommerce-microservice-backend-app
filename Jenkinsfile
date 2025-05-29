@@ -30,9 +30,9 @@ pipeline {
                     mkdir -p $HOME/bin
                     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
                     chmod +x kubectl && mv kubectl $HOME/bin/
-                    echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
-                fi
-                  # Verificar Java version
+                    echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc                fi
+                
+                # Verificar Java version
                 echo "Verificando Java..."
                 java -version
                 javac -version
@@ -46,11 +46,11 @@ pipeline {
                     mv jdk-11.0.2 $HOME/java11
                     cd -
                 fi
-                
-                # Configurar JAVA_HOME para Maven
+                  # Configurar JAVA_HOME para Maven
                 export JAVA_HOME=$HOME/java11
                 export PATH=$JAVA_HOME/bin:$PATH
-                  # Instalar Maven si no está disponible
+                
+                # Instalar Maven si no está disponible
                 echo "Verificando Maven..."
                 if ! command -v mvn &> /dev/null; then
                     echo "Instalando Maven..."
@@ -65,7 +65,8 @@ pipeline {
                 
                 # Verificar Maven
                 mvn --version
-                  # Descargar e instalar Node.js binario (sin apt-get)
+                
+                # Descargar e instalar Node.js binario (sin apt-get)
                 echo "Instalando Node.js binario..."
                 if ! command -v node &> /dev/null; then
                     cd /tmp
@@ -86,11 +87,26 @@ pipeline {
                 npm install -g newman
                 newman --version
                   # Instalar Python packages usando virtual environment (externally-managed-environment fix)
-                echo "Instalando locust..."
+                echo "Instalando python3-venv y locust..."
+                # Instalar python3-venv específico para la versión de Python disponible
+                echo "Detectando versión de Python..."
+                PYTHON_VERSION=$(python3 --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1,2)
+                echo "Versión detectada: $PYTHON_VERSION"
+                
+                # Instalar paquetes necesarios
+                apt-get update && apt-get install -y python3-venv python3-pip python3-dev build-essential
+                
+                # Crear entorno virtual
+                echo "Creando entorno virtual..."
                 python3 -m venv $HOME/venv
                 source $HOME/venv/bin/activate
+                
+                # Actualizar pip e instalar locust
+                pip install --upgrade pip
                 pip install locust
-                echo 'source $HOME/venv/bin/activate' >> ~/.bashrc                # Verificar instalaciones finales
+                echo 'source $HOME/venv/bin/activate' >> ~/.bashrc
+                
+                # Verificar instalaciones finales
                 echo "=== RESUMEN DE HERRAMIENTAS INSTALADAS ==="
                 kubectl version --client
                 echo "Java para Maven (debería ser Java 11):"
@@ -120,10 +136,10 @@ pipeline {
         
                 echo "Ejecutando pruebas unitarias en el servicio de productos"
                 echo "Usando Java: $(java -version 2>&1 | head -1)"
-                cd product-service
-        
-                # Limpiar target anterior
-                rm -rf target/                # Usar Maven con configuraciones específicas para Java 11
+                cd product-service                # Limpiar target anterior
+                rm -rf target/
+                
+                # Usar Maven con configuraciones específicas para Java 11
                 mvn clean test -Dmaven.compiler.source=11 -Dmaven.compiler.target=11 -Dmaven.test.failure.ignore=true
         
                 cd ..
@@ -135,14 +151,14 @@ pipeline {
                 }
             }
         }
-        
-        stage('Ejecutar Pruebas de Integración') {
+          stage('Ejecutar Pruebas de Integración') {
             when {
                 anyOf {
                     environment name: 'SELECTED_ENV', value: 'stage'
                 }
             }
-            steps {                sh '''
+            steps {
+                sh '''
                 # Configurar PATH y JAVA_HOME para Java 11
                 export JAVA_HOME=$HOME/java11
                 export PATH=$JAVA_HOME/bin:$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
@@ -187,11 +203,11 @@ pipeline {
                 
                 // Desplegar Cloud Config
                 sh '''
-                export PATH=$HOME/bin:$PATH
-                echo "Desplegando Cloud Config..."
+                export PATH=$HOME/bin:$PATH                echo "Desplegando Cloud Config..."
                 kubectl apply -f k8s/cloud-config.yaml
                 echo "Esperando a que Cloud Config esté disponible..."
-                sleep 60 # Dar tiempo para que se inicie                '''
+                sleep 60 # Dar tiempo para que se inicie
+                '''
             }
         }
         
@@ -215,10 +231,10 @@ pipeline {
                 kubectl apply -f k8s/user-service.yaml
                 kubectl apply -f k8s/favourite-service.yaml
                 kubectl apply -f k8s/proxy-client.yaml
-                
-                # Esperar a que los servicios estén disponibles
+                  # Esperar a que los servicios estén disponibles
                 echo "Esperando a que los servicios estén disponibles..."
-                sleep 60                '''
+                sleep 60
+                '''
             }
         }
           stage('Verificar Despliegue') {
@@ -341,10 +357,10 @@ pipeline {
                         sh '''                        # Configurar PATH y activar entorno virtual Python
                         export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
                         source $HOME/venv/bin/activate
-                        
-                        echo "Esperando a que el port-forward esté listo..."
+                          echo "Esperando a que el port-forward esté listo..."
                         sleep 15
-                          echo "Instalando dependencias de Locust..."
+                        
+                        echo "Instalando dependencias de Locust..."
                         cd locust
                         source $HOME/venv/bin/activate
                         pip install -r requirements.txt
