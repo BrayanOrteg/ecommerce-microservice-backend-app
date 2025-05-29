@@ -94,6 +94,20 @@ pipeline {
                 
                 # Instalar Python packages usando --user (sin permisos de root)
                 if [ "${SELECTED_ENV}" = "stage" ]; then
+                    echo "Verificando e instalando Python para Locust..."
+                    
+                    # Verificar si Python está disponible
+                    if ! command -v python3 &> /dev/null; then
+                        echo "Python3 no encontrado. Instalando..."
+                        apt-get update && apt-get install -y python3 python3-pip python3-venv
+                        
+                        # Verificar instalación
+                        python3 --version
+                        pip3 --version
+                    else
+                        echo "Python3 ya está disponible: $(python3 --version)"
+                    fi
+                    
                     echo "Instalando locust..."
                     python3 -m pip install --user locust --break-system-packages || pip3 install --user locust --break-system-packages
                 else
