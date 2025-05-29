@@ -382,7 +382,6 @@ ${commitMessage}
 - Verificar conectividad de red antes de acceder a los endpoints
 - En caso de problemas, contactar al equipo DevOps
 
-**📞 Contacto:** devops-team@empresa.com
 "
                         """
                         
