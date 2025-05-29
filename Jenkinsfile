@@ -75,8 +75,8 @@ pipeline {
                     # Limpiar directorio si existe
                     rm -rf $HOME/nodejs
                     cd /tmp
-                    curl -L -o node-v18.19.0-linux-x64.tar.xz https://nodejs.org/dist/v18.19.0/node-v18.19.0-linux-x64.tar.xz
-                    tar -xf node-v18.19.0-linux-x64.tar.xz
+                    curl -L -o node-v18.19.0-linux-x64.tar.gz https://nodejs.org/dist/v18.19.0/node-v18.19.0-linux-x64.tar.gz
+                    tar -xzf node-v18.19.0-linux-x64.tar.gz
                     mv node-v18.19.0-linux-x64 $HOME/nodejs
                     export PATH=$HOME/nodejs/bin:$PATH
                     echo 'export PATH=$HOME/nodejs/bin:$PATH' >> ~/.bashrc
