@@ -33,8 +33,21 @@ pipeline {
                     echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
                 fi
                 
-                # Verificar Java version
-                echo "Verificando Java..."
+                # Instalar Java 11 para Maven (el proyecto requiere Java 11)
+                echo "Instalando Java 11 para Maven..."
+                if [ ! -d $HOME/java11 ]; then
+                    cd /tmp
+                    curl -L -o openjdk-11.tar.gz https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz
+                    tar -xzf openjdk-11.tar.gz
+                    mv jdk-11.0.2 $HOME/java11
+                    cd -
+                fi
+
+                # Configurar JAVA_HOME para Maven
+                export JAVA_HOME=$HOME/java11
+                export PATH=$HOME/java11/bin:$PATH
+                
+                echo "Verificando Java para Maven:"
                 java -version
                 javac -version
                 
@@ -104,18 +117,22 @@ pipeline {
             }
             steps {
                 sh '''
-                # Configurar PATH con todas las herramientas
-                export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
-        
+                # Configurar JAVA_HOME para Java 11
+                export JAVA_HOME=$HOME/java11
+                export PATH=$HOME/java11/bin:$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
+
+                echo "Verificando versión de Java para Maven:"
+                java -version
+                
                 echo "Ejecutando pruebas unitarias en el servicio de productos"
                 cd product-service
-        
+
                 # Limpiar target anterior
                 rm -rf target/
-        
-                # Usar Maven con configuraciones específicas para evitar problemas de Java
+
+                # Usar Maven con Java 11
                 mvn clean test -Dmaven.compiler.source=11 -Dmaven.compiler.target=11 -Dmaven.test.failure.ignore=true
-        
+
                 cd ..
                 '''
             }
