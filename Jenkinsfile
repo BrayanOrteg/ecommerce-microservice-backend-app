@@ -37,13 +37,12 @@ pipeline {
                 echo "Verificando Java..."
                 java -version
                 javac -version
-                
-                # Instalar Maven si no está disponible
+                  # Instalar Maven si no está disponible
                 echo "Verificando Maven..."
                 if ! command -v mvn &> /dev/null; then
                     echo "Instalando Maven..."
                     cd /tmp
-                    wget -q https://archive.apache.org/dist/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz
+                    curl -sL https://archive.apache.org/dist/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz -o apache-maven-3.8.6-bin.tar.gz
                     tar -xzf apache-maven-3.8.6-bin.tar.gz
                     mv apache-maven-3.8.6 $HOME/maven
                     export PATH=$HOME/maven/bin:$PATH
@@ -53,12 +52,11 @@ pipeline {
                 
                 # Verificar Maven
                 mvn --version
-                
-                # Descargar e instalar Node.js binario (sin apt-get)
+                  # Descargar e instalar Node.js binario (sin apt-get)
                 echo "Instalando Node.js binario..."
                 if ! command -v node &> /dev/null; then
                     cd /tmp
-                    wget -q https://nodejs.org/dist/v18.19.0/node-v18.19.0-linux-x64.tar.xz
+                    curl -L -o node-v18.19.0-linux-x64.tar.xz https://nodejs.org/dist/v18.19.0/node-v18.19.0-linux-x64.tar.xz
                     tar -xf node-v18.19.0-linux-x64.tar.xz
                     mv node-v18.19.0-linux-x64 $HOME/nodejs
                     export PATH=$HOME/nodejs/bin:$PATH
