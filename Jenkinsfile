@@ -81,7 +81,7 @@ pipeline {
                 
                 # Instalar Python packages usando --user (sin permisos de root)
                 echo "Instalando locust..."
-                python3 -m pip install --user locust || pip3 install --user locust
+                python3 -m pip install --user locust --break-system-packages || pip3 install --user locust --break-system-packages
                 
                 # Verificar instalaciones finales
                 echo "=== RESUMEN DE HERRAMIENTAS INSTALADAS ==="
