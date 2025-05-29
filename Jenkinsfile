@@ -93,8 +93,12 @@ pipeline {
                 newman --version
                 
                 # Instalar Python packages usando --user (sin permisos de root)
-                echo "Instalando locust..."
-                python3 -m pip install --user locust --break-system-packages || pip3 install --user locust --break-system-packages
+                if [ "${SELECTED_ENV}" = "stage" ]; then
+                    echo "Instalando locust..."
+                    python3 -m pip install --user locust --break-system-packages || pip3 install --user locust --break-system-packages
+                else
+                    echo "Saltando instalación de Locust para ambiente ${SELECTED_ENV}"
+                fi
                 
                 # Verificar instalaciones finales
                 echo "=== RESUMEN DE HERRAMIENTAS INSTALADAS ==="
