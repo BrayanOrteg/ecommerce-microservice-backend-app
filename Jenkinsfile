@@ -92,6 +92,19 @@ pipeline {
                 npm install -g newman
                 newman --version
                 
+                # Instalar GitHub CLI
+                echo "Instalando GitHub CLI..."
+                if ! command -v gh &> /dev/null; then
+                    # Instalar gh CLI
+                    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+                    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+                    apt update && apt install gh -y
+                    gh --version
+                else
+                    echo "GitHub CLI ya está disponible: $(gh --version)"
+                fi
+                
                 # Instalar Python packages usando --user (sin permisos de root)
                 if [ "${SELECTED_ENV}" = "stage" ]; then
                     echo "Verificando e instalando Python para Locust..."
@@ -121,6 +134,7 @@ pipeline {
                 node --version
                 npm --version
                 newman --version
+                gh --version || echo "GitHub CLI pendiente de verificar"
                 python3 -m locust --version || echo "Locust pendiente de verificar en PATH"
                 echo "============================================"
                 '''
