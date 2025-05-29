@@ -32,11 +32,24 @@ pipeline {
                     chmod +x kubectl && mv kubectl $HOME/bin/
                     echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
                 fi
-                
-                # Verificar Java version
+                  # Verificar Java version
                 echo "Verificando Java..."
                 java -version
                 javac -version
+                
+                # Instalar Java 11 para Maven (el proyecto requiere Java 11)
+                echo "Instalando Java 11 para Maven..."
+                if [ ! -d "$HOME/java11" ]; then
+                    cd /tmp
+                    curl -L -o openjdk-11.tar.gz https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz
+                    tar -xzf openjdk-11.tar.gz
+                    mv jdk-11.0.2 $HOME/java11
+                    cd -
+                fi
+                
+                # Configurar JAVA_HOME para Maven
+                export JAVA_HOME=$HOME/java11
+                export PATH=$JAVA_HOME/bin:$PATH
                   # Instalar Maven si no está disponible
                 echo "Verificando Maven..."
                 if ! command -v mvn &> /dev/null; then
@@ -72,19 +85,23 @@ pipeline {
                 echo "Instalando newman..."
                 npm install -g newman
                 newman --version
-                
-                # Instalar Python packages usando --user (sin permisos de root)
+                  # Instalar Python packages usando virtual environment (externally-managed-environment fix)
                 echo "Instalando locust..."
-                python3 -m pip install --user locust || pip3 install --user locust
-                
-                # Verificar instalaciones finales
+                python3 -m venv $HOME/venv
+                source $HOME/venv/bin/activate
+                pip install locust
+                echo 'source $HOME/venv/bin/activate' >> ~/.bashrc                # Verificar instalaciones finales
                 echo "=== RESUMEN DE HERRAMIENTAS INSTALADAS ==="
                 kubectl version --client
+                echo "Java para Maven (debería ser Java 11):"
+                export JAVA_HOME=$HOME/java11
+                export PATH=$JAVA_HOME/bin:$PATH
+                java -version
                 mvn --version
                 node --version
                 npm --version
                 newman --version
-                python3 -m locust --version || echo "Locust pendiente de verificar en PATH"
+                source $HOME/venv/bin/activate && python3 -m locust --version || echo "Locust pendiente de verificar en entorno virtual"
                 echo "============================================"
                 '''
             }
@@ -96,18 +113,17 @@ pipeline {
                     environment name: 'SELECTED_ENV', value: 'stage'
                 }
             }
-            steps {
-                sh '''
-                # Configurar PATH con todas las herramientas
-                export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
+            steps {                sh '''
+                # Configurar PATH con todas las herramientas y JAVA_HOME para Java 11
+                export JAVA_HOME=$HOME/java11
+                export PATH=$JAVA_HOME/bin:$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
         
                 echo "Ejecutando pruebas unitarias en el servicio de productos"
+                echo "Usando Java: $(java -version 2>&1 | head -1)"
                 cd product-service
         
                 # Limpiar target anterior
-                rm -rf target/
-        
-                # Usar Maven con configuraciones específicas para evitar problemas de Java
+                rm -rf target/                # Usar Maven con configuraciones específicas para Java 11
                 mvn clean test -Dmaven.compiler.source=11 -Dmaven.compiler.target=11 -Dmaven.test.failure.ignore=true
         
                 cd ..
@@ -126,13 +142,14 @@ pipeline {
                     environment name: 'SELECTED_ENV', value: 'stage'
                 }
             }
-            steps {
-                sh '''
-                # Configurar PATH
-                export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
-        
+            steps {                sh '''
+                # Configurar PATH y JAVA_HOME para Java 11
+                export JAVA_HOME=$HOME/java11
+                export PATH=$JAVA_HOME/bin:$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
+                
                 echo "Ejecutando pruebas de integración en los microservicios"
-        
+                echo "Usando Java: $(java -version 2>&1 | head -1)"
+                
                 # Ejecutar pruebas de integración en product-service
                 cd product-service
                 mvn test -Dtest=*Integration* -Dmaven.compiler.source=11 -Dmaven.compiler.target=11 -Dmaven.test.failure.ignore=true
@@ -321,16 +338,16 @@ pipeline {
                     
                     try {
                         // Ejecutar tests de Locust
-                        sh '''
-                        # Configurar PATH
-                        export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$HOME/.local/bin:$PATH
+                        sh '''                        # Configurar PATH y activar entorno virtual Python
+                        export PATH=$HOME/bin:$HOME/maven/bin:$HOME/nodejs/bin:$PATH
+                        source $HOME/venv/bin/activate
                         
                         echo "Esperando a que el port-forward esté listo..."
                         sleep 15
-                        
-                        echo "Instalando dependencias de Locust..."
+                          echo "Instalando dependencias de Locust..."
                         cd locust
-                        python3 -m pip install --user -r requirements.txt
+                        source $HOME/venv/bin/activate
+                        pip install -r requirements.txt
                         
                         echo "Ejecutando pruebas de carga con Locust..."
                         python3 -m locust -f locustfile.py --headless -u 5 -r 2 -t 30s --csv=load_test_report
