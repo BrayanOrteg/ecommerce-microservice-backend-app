@@ -48,7 +48,7 @@ foreach ($service in $microservices) {
     Write-Host "Reiniciando $service para asegurar registro en Eureka..." -ForegroundColor Yellow
     
     # Reiniciar el deployment
-    kubectl rollout restart deployment $service 
+    kubectl rollout restart deployment $service -n jenkins
     
     # Esperar un momento entre reinicios para no sobrecargar el sistema
     Start-Sleep -Seconds 2
