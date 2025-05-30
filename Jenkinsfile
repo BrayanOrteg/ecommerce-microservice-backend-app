@@ -406,7 +406,7 @@ ${commitMessage}
         
                 echo "Ejecutando pruebas de carga con Locust..."
                 cd locust
-                python3 -m locust -f locustfile.py --headless -u 5 -r 2 -t 30s --csv=load_test_report
+                python3 -m locust -f locustfile.py --headless -u 500 -r 100 -t 30s --csv=load_test_report
         
                 echo "Pruebas de Locust completadas"
                 ls -la *.csv
