@@ -251,7 +251,6 @@
 
 #### Recomendaciones Principales
 
-**Acciones Inmediatas:**
 1. **Solucionar servicios críticos:** Revisar configuraciones de timeout y conexiones DB en payment-service y shipping-service
 2. **Implementar resiliencia:** Circuit breakers y políticas de retry para prevenir cascadas de fallos
 3. **Optimizar favourite-service:** Implementar caching y revisar consultas SQL
