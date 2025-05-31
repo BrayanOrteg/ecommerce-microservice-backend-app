@@ -272,26 +272,5 @@ Se implementó un sistema completo de Release Notes automático que:
 - **Documenta servicios desplegados** y puertos de acceso
 - **Proporciona comandos útiles** para operaciones post-despliegue
 
-### Ejemplo de Release Note Generado:
-```markdown
-# 🚀 Release Notes - v1.0.0
-
-**📅 Fecha:** 2024-12-XX XX:XX:XX
-**👤 Responsable:** Jenkins CI
-**🔗 Build:** #123
-**🔑 Commit:** abc123def
-
-## ✅ Validaciones Realizadas
-- ✅ Pruebas End-to-End ejecutadas exitosamente
-- ✅ Verificación de conectividad entre microservicios
-- ✅ Validación de endpoints principales
-
-## 🏗️ Servicios Desplegados
-- API Gateway (Puerto 8080)
-- Service Discovery - Eureka (Puerto 8761)
-- Zipkin Tracing (Puerto 9411)
-- Microservicios: Product, Order, Payment, User, Shipping, Favourite
-```
-
 #### Release Note en GitHub
 ![Release Note Generado en GitHub](https://media.discordapp.net/attachments/895756291941740624/1378181386569252864/image.png?ex=683baaef&is=683a596f&hm=89bc0157ca35f27141a88a4ec31b7dcc90e7060bf785cea233ca305b24606289&=&format=webp&quality=lossless)
