@@ -1,22 +1,92 @@
+trigger: none
+pr: none
 
-trigger:
-- develop
-- stage
-- master
+parameters:
+  - name: profile
+    displayName: 'Elige un perfil (prod / dev / stage)'
+    type: string
+    default: dev
+    values:
+      - dev
+      - stage
+      - prod
+
+variables:
+  # Azure Service Connection for AKS and other Azure resources
+  azureSubscription: 'ecommerce-terraform-sc'
+  # Docker Hub Service Connection
+  dockerHubServiceConnection: 'ecommerce-docker'
+  
+  # Environment variables
+  RESOURCE_GROUP: 'rg-${{ parameters.profile }}'
+  CLUSTER_NAME: 'aks-${{ parameters.profile }}'
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
 
-steps:
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '11'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'package'
+stages:
+  - stage: Checkout
+    displayName: 'Checkout Source Code'
+    jobs:
+      - job: CheckoutJob
+        steps:
+          - checkout: self
+            displayName: 'Checkout repository'
 
+  - stage: Build
+    displayName: 'Build Project'
+    jobs:
+      - job: BuildJob
+        steps:
+          - task: Maven@4
+            inputs:
+              azureSubscription: 'ecommerce-terraform-sc'
+              mavenPomFile: 'pom.xml'
+              goals: 'clean package'
+              options: '-DskipTests'
+              publishJUnitResults: false
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
 
+  - stage: UnitAndIntegrationTests
+    displayName: 'Run Unit and Integration Tests'
+    jobs:
+      - job: TestJob
+        steps:
+          - task: Maven@4
+            inputs:
+              azureSubscription: 'ecommerce-terraform-sc'
+              mavenPomFile: 'pom.xml'
+              goals: 'clean package'
+              options: '-DskipTests=false'
+              publishJUnitResults: false
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+
+  - stage: BuildAndPushDockerImages
+    displayName: 'Build and Push Docker Images'
+    jobs:
+      - job: DockerJob
+        steps:
+          - task: Docker@2
+            displayName: 'Login to Docker Hub'
+            inputs:
+              containerRegistry: $(dockerHubServiceConnection)
+              command: 'login'
+          - script: |
+              docker-compose -f compose.yml build
+              docker-compose -f compose.yml push
+            displayName: 'Build and Push Docker Images with Docker Compose'
+            # Ensure docker-compose.yml is present and configured
+          - task: Docker@2
+            displayName: 'Logout from Docker Hub'
+            inputs:
+              containerRegistry: $(dockerHubServiceConnection)
+              command: 'logout'
+            condition: succeededOrFailed() # Ensure logout happens even if previous steps fail
