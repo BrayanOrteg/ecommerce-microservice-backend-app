@@ -114,7 +114,7 @@ stages:
               scriptLocation: 'inlineScript'
               inlineScript: 'az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --overwrite-existing'
           - task: KubernetesManifest@1
-            displayName: 'Apply Kubernetes Manifests'
+            displayName: 'Apply Zipkin Manifest'
             inputs:
               action: 'deploy'
               connectionType: 'azureResourceManager'
@@ -132,13 +132,15 @@ stages:
             displayName: 'Wait for Zipkin to be Healthy'
             condition: succeeded()
           - task: KubernetesManifest@1
-            displayName: 'Apply Kubernetes Manifests'
+            displayName: 'Apply Service Discovery Manifest'
             inputs:
-              kubernetesServiceConnection: ''
               action: 'deploy'
+              connectionType: 'azureResourceManager'
+              azureSubscriptionConnection: 'ecommerce-terraform-sc'
+              azureResourceGroup: '$(RESOURCE_GROUP)'
+              kubernetesCluster: '$(CLUSTER_NAME)'
               namespace: 'default'
-              manifests: |
-                $(K8S_MANIFEST_DIR)/service-discovery.yaml
+              manifests: '$(K8S_MANIFEST_DIR)/service-discovery.yaml'
           - script: |
               echo "Waiting for Service Discovery to be healthy..."
               # Asume que service-discovery.yaml crea un Deployment llamado 'service-discovery'
@@ -148,13 +150,15 @@ stages:
             displayName: 'Wait for Service Discovery to be Healthy'
             condition: succeeded()
           - task: KubernetesManifest@1
-            displayName: 'Apply Kubernetes Manifests'
+            displayName: 'Apply Cloud Config Manifest'
             inputs:
-              kubernetesServiceConnection: ''
               action: 'deploy'
+              connectionType: 'azureResourceManager'
+              azureSubscriptionConnection: 'ecommerce-terraform-sc'
+              azureResourceGroup: '$(RESOURCE_GROUP)'
+              kubernetesCluster: '$(CLUSTER_NAME)'
               namespace: 'default'
-              manifests: |
-                $(K8S_MANIFEST_DIR)/cloud-config.yaml
+              manifests: '$(K8S_MANIFEST_DIR)/cloud-config.yaml'
           - script: |
               echo "Waiting for Cloud Config to be healthy..."
               # Asume que cloud-config.yaml crea un Deployment llamado 'cloud-config'
