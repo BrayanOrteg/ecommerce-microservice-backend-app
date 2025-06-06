@@ -20,6 +20,7 @@ variables:
   # Environment variables
   RESOURCE_GROUP: 'rg-${{ parameters.profile }}'
   CLUSTER_NAME: 'aks-${{ parameters.profile }}'
+  K8S_MANIFEST_DIR: 'k8s'
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -101,3 +102,62 @@ stages:
               containerRegistry: $(dockerHubServiceConnection)
               command: 'logout'
             condition: succeededOrFailed()
+  - stage: DeployToAKS
+    displayName: 'Configure kubectl and deploy to AKS'
+    jobs:
+      - job: DeployJob
+        steps:
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: 'ecommerce-terraform-sc'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: 'az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --overwrite-existing'
+          - task: KubernetesManifest@1
+            displayName: 'Apply Kubernetes Manifests'
+            inputs:
+              kubernetesServiceConnection: ''
+              action: 'deploy'
+              namespace: 'default'
+              manifests: |
+                $(K8S_MANIFEST_DIR)/zipkin.yaml
+          - script: |
+              echo "Waiting for Zipkin to be healthy..."
+              # Asume que zipkin.yaml crea un Deployment llamado 'zipkin'
+              kubectl rollout status deployment/zipkin -n default --timeout=5m
+              # O si es un pod o tiene otra etiqueta específica, puedes usar:
+              # kubectl wait --for=condition=Ready pod -l app=zipkin-app -n default --timeout=5m
+            displayName: 'Wait for Zipkin to be Healthy'
+            condition: succeeded()
+          - task: KubernetesManifest@1
+            displayName: 'Apply Kubernetes Manifests'
+            inputs:
+              kubernetesServiceConnection: ''
+              action: 'deploy'
+              namespace: 'default'
+              manifests: |
+                $(K8S_MANIFEST_DIR)/service-discovery.yaml
+          - script: |
+              echo "Waiting for Service Discovery to be healthy..."
+              # Asume que service-discovery.yaml crea un Deployment llamado 'service-discovery'
+              kubectl rollout status deployment/service-discovery -n default --timeout=5m
+              # O si es un pod o tiene otra etiqueta específica:
+              # kubectl wait --for=condition=Ready pod -l app=service-discovery-app -n default --timeout=5m
+            displayName: 'Wait for Service Discovery to be Healthy'
+            condition: succeeded()
+          - task: KubernetesManifest@1
+            displayName: 'Apply Kubernetes Manifests'
+            inputs:
+              kubernetesServiceConnection: ''
+              action: 'deploy'
+              namespace: 'default'
+              manifests: |
+                $(K8S_MANIFEST_DIR)/cloud-config.yaml
+          - script: |
+              echo "Waiting for Cloud Config to be healthy..."
+              # Asume que cloud-config.yaml crea un Deployment llamado 'cloud-config'
+              kubectl rollout status deployment/cloud-config -n default --timeout=5m
+              # O si es un pod o tiene otra etiqueta específica:
+              # kubectl wait --for=condition=Ready pod -l app=cloud-config-app -n default --timeout=5m
+            displayName: 'Wait for Cloud Config to be Healthy'
+            condition: succeeded()
