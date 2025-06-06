@@ -50,7 +50,24 @@ stages:
               mavenVersionOption: 'Default'
               mavenAuthenticateFeed: false
               effectivePomSkip: false
-              sonarQubeRunAnalysis: false
+              sonarQubeRunAnalysis: true
+
+  - stage: SonnarQube
+    displayName: 'SonnarQube Cloud'
+    jobs:
+      - job: SonnarJob
+        steps:
+        - task: SonarCloudPrepare@3
+          inputs:
+            SonarQube: 'ecommerce-sonar-qube'
+            organization: 'brayan-organization'
+            scannerMode: 'other'
+            extraProperties: |
+              # Additional properties that will be passed to the scanner,
+              # Put one key=value per line, example:
+              # sonar.exclusions=**/*.bin
+              sonar.projectKey=brayan-organization_First-pipeline
+              sonar.projectName=First pipeline
 
   - stage: UnitAndIntegrationTests
     displayName: 'Run Unit and Integration Tests'
@@ -102,6 +119,7 @@ stages:
               containerRegistry: $(dockerHubServiceConnection)
               command: 'logout'
             condition: succeededOrFailed()
+
   - stage: DeployToAKS
     displayName: 'Configure kubectl and deploy to AKS'
     jobs:
@@ -113,6 +131,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: 'az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --overwrite-existing'
+
           - task: KubernetesManifest@1
             displayName: 'Apply Zipkin Manifest'
             inputs:
@@ -131,6 +150,7 @@ stages:
               # kubectl wait --for=condition=Ready pod -l app=zipkin-app -n default --timeout=5m
             displayName: 'Wait for Zipkin to be Healthy'
             condition: succeeded()
+
           - task: KubernetesManifest@1
             displayName: 'Apply Service Discovery Manifest'
             inputs:
@@ -149,6 +169,7 @@ stages:
               # kubectl wait --for=condition=Ready pod -l app=service-discovery-app -n default --timeout=5m
             displayName: 'Wait for Service Discovery to be Healthy'
             condition: succeeded()
+
           - task: KubernetesManifest@1
             displayName: 'Apply Cloud Config Manifest'
             inputs:
