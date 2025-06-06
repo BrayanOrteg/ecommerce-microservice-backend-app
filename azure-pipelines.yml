@@ -34,24 +34,6 @@ stages:
           - checkout: self
             displayName: 'Checkout repository'
 
-  - stage: Build
-    displayName: 'Build Project'
-    jobs:
-      - job: BuildJob
-        steps:
-          - task: Maven@4
-            inputs:
-              azureSubscription: 'ecommerce-terraform-sc'
-              mavenPomFile: 'pom.xml'
-              goals: 'clean package'
-              options: '-DskipTests'
-              publishJUnitResults: false
-              javaHomeOption: 'JDKVersion'
-              mavenVersionOption: 'Default'
-              mavenAuthenticateFeed: false
-              effectivePomSkip: false
-              sonarQubeRunAnalysis: false
-
   - stage: SonnarQube
     displayName: 'SonnarQube Cloud'
     jobs:
@@ -68,6 +50,24 @@ stages:
               # sonar.exclusions=**/*.bin
               sonar.projectKey=brayan-organization_First-pipeline
               sonar.projectName=First pipeline
+
+  - stage: Build
+    displayName: 'Build Project'
+    jobs:
+      - job: BuildJob
+        steps:
+          - task: Maven@4
+            inputs:
+              azureSubscription: 'ecommerce-terraform-sc'
+              mavenPomFile: 'pom.xml'
+              goals: 'clean package'
+              options: '-DskipTests'
+              publishJUnitResults: false
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: true
 
   - stage: UnitAndIntegrationTests
     displayName: 'Run Unit and Integration Tests'
