@@ -42,6 +42,8 @@ services:
       zipkin-container:
         condition: service_started
   api-gateway-container:
+    build:
+      context: ./api-gateway
     image: kenbra/api-gateway-ecommerce-boot:0.1.0
     ports:
       - 8080:8080
@@ -57,6 +59,8 @@ services:
       zipkin-container:
         condition: service_started
   proxy-client-container:
+    build:
+      context: ./proxy-client
     image: kenbra/proxy-client-ecommerce-boot:0.1.0
     ports:
       - 8900:8900
@@ -72,6 +76,8 @@ services:
       zipkin-container:
         condition: service_started
   order-service-container:
+    build:
+      context: ./order-service
     image: kenbra/order-service-ecommerce-boot:0.1.0
     ports:
       - 8300:8300
@@ -87,6 +93,8 @@ services:
       zipkin-container:
         condition: service_started
   payment-service-container:
+    build:
+      context: ./payment-service
     image: kenbra/payment-service-ecommerce-boot:0.1.0
     ports:
       - 8400:8400
@@ -102,6 +110,8 @@ services:
       zipkin-container:
         condition: service_started
   product-service-container:
+    build:
+      context: ./product-service
     image: kenbra/product-service-ecommerce-boot:0.1.0
     ports:
       - 8500:8500
@@ -117,6 +127,8 @@ services:
       zipkin-container:
         condition: service_started
   shipping-service-container:
+    build:
+      context: ./shipping-service
     image: kenbra/shipping-service-ecommerce-boot:0.1.0
     ports:
       - 8600:8600
@@ -132,6 +144,8 @@ services:
       zipkin-container:
         condition: service_started
   user-service-container:
+    build:
+      context: ./user-service
     image: kenbra/user-service-ecommerce-boot:0.1.0
     ports:
       - 8700:8700
@@ -147,6 +161,8 @@ services:
       zipkin-container:
         condition: service_started
   favourite-service-container:
+    build:
+      context: ./favourite-service
     image: kenbra/favourite-service-ecommerce-boot:0.1.0
     ports:
       - 8800:8800
