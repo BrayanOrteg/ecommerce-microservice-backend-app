@@ -34,28 +34,22 @@ stages:
           - checkout: self
             displayName: 'Checkout repository'
 
-  - stage: SonnarQube
-    displayName: 'SonnarQube Cloud'
-    jobs:
-      - job: SonnarJob
-        steps:
-        - task: SonarCloudPrepare@3
-          inputs:
-            SonarQube: 'ecommerce-sonar-qube'
-            organization: 'brayan-organization'
-            scannerMode: 'other'
-            extraProperties: |
-              # Additional properties that will be passed to the scanner,
-              # Put one key=value per line, example:
-              # sonar.exclusions=**/*.bin
-              sonar.projectKey=brayan-organization_First-pipeline
-              sonar.projectName=First pipeline
-
-  - stage: Build
+  - stage: SonnarQubeAndBuild
     displayName: 'Build Project'
     jobs:
-      - job: BuildJob
+      - job: SonnarAndBuildJob
         steps:
+          - task: SonarCloudPrepare@3
+            inputs:
+              SonarQube: 'ecommerce-sonar-qube'
+              organization: 'brayan-organization'
+              scannerMode: 'other'
+              extraProperties: |
+                # Additional properties that will be passed to the scanner,
+                # Put one key=value per line, example:
+                # sonar.exclusions=**/*.bin
+                sonar.projectKey=brayan-organization_First-pipeline
+                sonar.projectName=First pipeline
           - task: Maven@4
             inputs:
               azureSubscription: 'ecommerce-terraform-sc'
