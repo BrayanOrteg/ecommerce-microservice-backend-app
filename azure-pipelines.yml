@@ -116,11 +116,13 @@ stages:
           - task: KubernetesManifest@1
             displayName: 'Apply Kubernetes Manifests'
             inputs:
-              kubernetesServiceConnection: ''
               action: 'deploy'
+              connectionType: 'azureResourceManager'
+              azureSubscriptionConnection: 'ecommerce-terraform-sc'
+              azureResourceGroup: '$(RESOURCE_GROUP)'
+              kubernetesCluster: '$(CLUSTER_NAME)'
               namespace: 'default'
-              manifests: |
-                $(K8S_MANIFEST_DIR)/zipkin.yaml
+              manifests: '$(K8S_MANIFEST_DIR)/zipkin.yaml'
           - script: |
               echo "Waiting for Zipkin to be healthy..."
               # Asume que zipkin.yaml crea un Deployment llamado 'zipkin'
