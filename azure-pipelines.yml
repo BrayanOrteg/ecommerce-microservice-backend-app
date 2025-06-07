@@ -21,6 +21,7 @@ variables:
   RESOURCE_GROUP: 'rg-${{ parameters.profile }}'
   CLUSTER_NAME: 'aks-${{ parameters.profile }}'
   K8S_MANIFEST_DIR: 'k8s'
+  IMAGE_TAG_SUFFIX: ':0.1.0'
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -45,9 +46,6 @@ stages:
               organization: 'brayan-organization'
               scannerMode: 'other'
               extraProperties: |
-                # Additional properties that will be passed to the scanner,
-                # Put one key=value per line, example:
-                # sonar.exclusions=**/*.bin
                 sonar.projectKey=brayan-organization_First-pipeline
                 sonar.projectName=First pipeline
           - task: Maven@4
@@ -105,8 +103,47 @@ stages:
               command: 'login'
           - script: |
               docker compose -f compose.yml build
-              docker compose -f compose.yml push
             displayName: 'Build and Push Docker Images with Docker Compose'
+          - script: |
+              echo "Installing Trivy..."
+              sudo apt-get update
+              sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+              wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+              echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+              sudo apt-get update
+              sudo apt-get install -y trivy
+              trivy --version
+            displayName: 'Install Trivy'
+          - script: |
+              echo "Scanning Docker Images with Trivy..."
+              declare -A service_images
+              service_images["cloud-config-container"]="cloud-config"
+              service_images["api-gateway-container"]="kenbra/api-gateway-ecommerce-boot"
+              service_images["proxy-client-container"]="kenbra/proxy-client-ecommerce-boot"
+              service_images["order-service-container"]="kenbra/order-service-ecommerce-boot"
+              service_images["payment-service-container"]="kenbra/payment-service-ecommerce-boot"
+              service_images["product-service-container"]="kenbra/product-service-ecommerce-boot"
+              service_images["shipping-service-container"]="kenbra/shipping-service-ecommerce-boot"
+              service_images["user-service-container"]="kenbra/user-service-ecommerce-boot"
+              service_images["favourite-service-container"]="kenbra/favourite-service-ecommerce-boot"
+              SCAN_FAILED=false
+              for service_name in "${!service_images[@]}"; do
+                  image_name="${service_images[$service_name]}$(IMAGE_TAG_SUFFIX)"
+                  echo "--- Scanning image: $image_name ---"
+                  if ! trivy image --exit-code $(TRIVY_EXIT_CODE) --severity $(TRIVY_SEVERITY_THRESHOLD) $image_name; then
+                      echo "Trivy scan failed for $image_name with severity $(TRIVY_SEVERITY_THRESHOLD)."
+                      SCAN_FAILED=true
+                  fi
+              done
+
+              if [ "$SCAN_FAILED" = true ]; then
+                  echo "##vso[task.logissue type=error]Trivy image scan found critical vulnerabilities."
+                  exit 1 
+              fi
+            displayName: 'Scan Docker Images with Trivy'
+            condition: succeeded()
+          - script: |
+              docker compose -f compose.yml push
           - task: Docker@2
             displayName: 'Logout from Docker Hub'
             inputs:
@@ -138,10 +175,7 @@ stages:
               manifests: '$(K8S_MANIFEST_DIR)/zipkin.yaml'
           - script: |
               echo "Waiting for Zipkin to be healthy..."
-              # Asume que zipkin.yaml crea un Deployment llamado 'zipkin'
-              kubectl rollout status deployment/zipkin -n default --timeout=5m
-              # O si es un pod o tiene otra etiqueta específica, puedes usar:
-              # kubectl wait --for=condition=Ready pod -l app=zipkin-app -n default --timeout=5m
+              kubectl wait --for=condition=Ready pod -l app=zipkin-app -n default --timeout=5m
             displayName: 'Wait for Zipkin to be Healthy'
             condition: succeeded()
 
@@ -157,10 +191,7 @@ stages:
               manifests: '$(K8S_MANIFEST_DIR)/service-discovery.yaml'
           - script: |
               echo "Waiting for Service Discovery to be healthy..."
-              # Asume que service-discovery.yaml crea un Deployment llamado 'service-discovery'
-              kubectl rollout status deployment/service-discovery -n default --timeout=5m
-              # O si es un pod o tiene otra etiqueta específica:
-              # kubectl wait --for=condition=Ready pod -l app=service-discovery-app -n default --timeout=5m
+              kubectl wait --for=condition=Ready pod -l app=service-discovery-app -n default --timeout=5m
             displayName: 'Wait for Service Discovery to be Healthy'
             condition: succeeded()
 
@@ -176,9 +207,6 @@ stages:
               manifests: '$(K8S_MANIFEST_DIR)/cloud-config.yaml'
           - script: |
               echo "Waiting for Cloud Config to be healthy..."
-              # Asume que cloud-config.yaml crea un Deployment llamado 'cloud-config'
-              kubectl rollout status deployment/cloud-config -n default --timeout=5m
-              # O si es un pod o tiene otra etiqueta específica:
-              # kubectl wait --for=condition=Ready pod -l app=cloud-config-app -n default --timeout=5m
+              kubectl wait --for=condition=Ready pod -l app=cloud-config-app -n default --timeout=5m
             displayName: 'Wait for Cloud Config to be Healthy'
             condition: succeeded()
