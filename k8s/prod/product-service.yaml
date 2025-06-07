@@ -1,25 +1,25 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: api-gateway
+  name: product-service
 spec:
   type: NodePort
   selector:
-    app: api-gateway
+    app: product-service
   ports:
-    - port: 8080
-      targetPort: 8080
-      nodePort: 30080
+    - port: 8500
+      targetPort: 8500
+      nodePort: 30500
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-gateway
+  name: product-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api-gateway
+      app: product-service
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -28,23 +28,16 @@ spec:
   template:
     metadata:
       labels:
-        app: api-gateway
+        app: product-service    
     spec:
-      initContainers:
-        - name: wait-for-cloud-config
-          image: busybox:1.28
-          command: ['sh', '-c', 'until wget -T 5 -q -O- http://cloud-config:9296/actuator/health; do echo "Waiting for cloud-config"; sleep 10; done;']
-        - name: wait-for-service-discovery
-          image: busybox:1.28
-          command: ['sh', '-c', 'until wget -T 5 -q -O- http://service-discovery:8761/actuator/health; do echo "Waiting for service-discovery"; sleep 10; done;']
       containers:
-        - name: api-gateway
-          image: kenbra/api-gateway-ecommerce-boot:0.1.0
+        - name: product-service
+          image: kenbra/product-service-ecommerce-boot:prod
           ports:
-            - containerPort: 8080          
+            - containerPort: 8500          
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: "dev"
+              value: "prod"
             - name: SPRING_ZIPKIN_BASE_URL
               value: "http://zipkin:9411"
             - name: SPRING_CONFIG_IMPORT
@@ -52,11 +45,18 @@ spec:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://service-discovery:8761/eureka/"
             - name: EUREKA_INSTANCE
-              value: "api-gateway"
+              value: "product-service"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"          
           readinessProbe:
             httpGet:
-              path: /actuator/health
-              port: 8080
+              path: /product-service/actuator/health
+              port: 8500
             initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 5
@@ -64,8 +64,8 @@ spec:
             failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /actuator/health
-              port: 8080
+              path: /product-service/actuator/health
+              port: 8500
             initialDelaySeconds: 90
             periodSeconds: 30
             timeoutSeconds: 5

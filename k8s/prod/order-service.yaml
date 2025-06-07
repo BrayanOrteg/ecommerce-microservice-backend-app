@@ -32,12 +32,12 @@ spec:
     spec:
       containers:        
         - name: order-service
-          image: kenbra/order-service-ecommerce-boot:0.1.0
+          image: kenbra/order-service-ecommerce-boot:prod
           ports:
             - containerPort: 8300          
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: "dev"
+              value: "prod"
             - name: SPRING_ZIPKIN_BASE_URL
               value: "http://zipkin:9411"
             - name: SPRING_CONFIG_IMPORT

@@ -32,12 +32,12 @@ spec:
     spec:
       containers:
         - name: service-discovery
-          image: kenbra/service-discovery-ecommerce-boot:0.1.0
+          image: kenbra/service-discovery-ecommerce-boot:stage
           ports:
             - containerPort: 8761          
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: "dev"
+              value: "stage"
             - name: SPRING_ZIPKIN_BASE_URL
               value: "http://zipkin:9411"
             - name: EUREKA_INSTANCE
