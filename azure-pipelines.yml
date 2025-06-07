@@ -145,7 +145,7 @@ stages:
 
   - stage: DeployToAKS
     displayName: 'Deploy to AKS'
-    dependsOn: BuildAndPushDockerImages
+    dependsOn: PushDockerImages
     jobs:
       - job: DeployJob
         steps:
