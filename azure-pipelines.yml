@@ -22,6 +22,9 @@ variables:
   CLUSTER_NAME: 'aks-${{ parameters.profile }}'
   K8S_MANIFEST_DIR: 'k8s'
   IMAGE_TAG_SUFFIX: ':0.1.0'
+  TRIVY_SEVERITY_THRESHOLD: 'HIGH,CRITICAL' # Fail pipeline if HIGH or CRITICAL vulnerabilities are found
+  TRIVY_EXIT_CODE: '1' # Exit with 1 if issues are found for vulnerabilities or misconfigs
+
 
 pool:
   vmImage: 'ubuntu-latest'
