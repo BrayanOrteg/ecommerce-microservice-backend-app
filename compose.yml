@@ -5,6 +5,8 @@ services:
     ports:
       - 9411:9411
   service-discovery-container:
+    build:
+      context: ./service-discovery
     image: kenbra/service-discovery-ecommerce-boot:0.1.0
     ports:
       - 8761:8761
@@ -23,7 +25,7 @@ services:
   cloud-config-container:
     build:
       context: ./cloud-config
-      dockerfile: Dockerfile
+    image: kenbra/cloud-config-ecommerce-boot:0.1.0
     ports:
       - 9296:9296
     environment:
