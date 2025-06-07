@@ -120,7 +120,7 @@ stages:
           - script: |
               echo "Scanning Docker Images with Trivy..."
               declare -A service_images
-              service_images["cloud-config-container"]="cloud-config"
+              service_images["cloud-config-container"]="kenbra/cloud-config-ecommerce-boot"
               service_images["api-gateway-container"]="kenbra/api-gateway-ecommerce-boot"
               service_images["proxy-client-container"]="kenbra/proxy-client-ecommerce-boot"
               service_images["order-service-container"]="kenbra/order-service-ecommerce-boot"
