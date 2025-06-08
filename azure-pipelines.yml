@@ -269,6 +269,10 @@ stages:
     jobs:
       - job: Newman
         steps:
+          - task: Npm@1
+            inputs:
+              command: 'custom'
+              customCommand: 'install newman -g'
           - task: NewmanPostman@4
             inputs:
               collectionSourceType: 'file'
