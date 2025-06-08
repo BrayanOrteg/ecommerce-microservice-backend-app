@@ -249,7 +249,7 @@ stages:
               echo "All microservices deployments are healthy."
             displayName: 'Wait for all Microservices'
 
-          - script: |
+          - bash: |
               echo "Getting API Gateway Load Balancer IP..."
               kubectl wait --namespace default \
                 --for=jsonpath='{.status.loadBalancer.ingress[0].ip}' --timeout=300s \
@@ -257,12 +257,14 @@ stages:
                 echo "Error API Gateway LoadBalancer did not get an external IP within the timeout."
                 exit 1
               }
-
+            displayName: 'Wait for API Gateway Public IP'
+          
+          - bash: |
               API_GATEWAY_IP=$(kubectl get service api-gateway --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-              echo '##vso[task.setvariable variable=E2E_BASE_URL]http://$API_GATEWAY_IP:8080'
+              echo "##vso[task.setvariable variable=E2E_BASE_URL]http://$API_GATEWAY_IP:8080"
               echo "API_GATEWAY_IP extracted $API_GATEWAY_IP" # For debugging
-              echo "E2E_BASE_URL set to http://$API_GATEWAY_IP:8080" # For debugging
-            displayName: 'Get API Gateway Public IP'
+              echo "E2E_BASE_URL set to $(E2E_BASE_URL)" # For debugging
+              
 
   - stage: E2E
     displayName: 'Run E2E'
@@ -288,7 +290,7 @@ stages:
               collectionSourceType: 'file'
               collectionFileSource: 'postman-collections/E2E-tests.postman_collection.json'
               environmentSourceType: 'none'
-              globalVars: 'base_url=http://$API_GATEWAY_IP:8080'
+              globalVars: 'base_url=$(E2E_BASE_URL)'
               reporters: 'htmlextra'
               htmlExtraDarkTheme: true
               htmlExtraLogs: true
