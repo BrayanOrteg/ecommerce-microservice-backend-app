@@ -403,11 +403,7 @@ stages:
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Locust CSV Reports'
             inputs:
-              pathtoPublish: |
-                $(Build.SourcesDirectory)/locust/load_test_report_stats.csv
-                $(Build.SourcesDirectory)/locust/load_test_report_failures.csv
-                $(Build.SourcesDirectory)/locust/load_test_report_exceptions.csv
-                $(Build.SourcesDirectory)/locust/load_test_report_stats_history.csv
+              pathToPublish: '$(Build.SourcesDirectory)/locust/load_test_report*.csv' # Changed to use a wildcard
               artifactName: 'LocustReportsCSV'
               publishLocation: 'Container'
             condition: always()
