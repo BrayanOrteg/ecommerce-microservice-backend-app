@@ -160,6 +160,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: 'az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --overwrite-existing'
+            displayName: 'Get AKS Credentials'
 
           - task: KubernetesManifest@1
             displayName: 'Deploy Zipkin'
@@ -244,7 +245,7 @@ stages:
               for deployment in "${deployments[@]}"; do
                 echo "--- Waiting for deployment $deployment ---"
                 kubectl rollout status deployment/$deployment --timeout=300s --namespace default || {
-                  echo "Error Deployment $deployment did not become healthy within the timeout."
+                  echo "##vso[task.logissue type=error;]Deployment $deployment did not become healthy within the timeout."
                   exit 1
                 }
                 echo "Deployment $deployment is healthy."
@@ -253,30 +254,50 @@ stages:
             displayName: 'Wait for all Microservices'
 
           - bash: |
-              echo "Getting API Gateway Load Balancer IP..."
-              kubectl wait --namespace default \
-                --for=jsonpath='{.status.loadBalancer.ingress[0].ip}' --timeout=300s \
-                service/api-gateway || {
-                echo "Error API Gateway LoadBalancer did not get an external IP within the timeout."
+              echo "Attempting to get API Gateway Load Balancer IP..."
+              API_GATEWAY_IP=""
+              RETRY_COUNT=0
+              MAX_RETRIES=12 # Retry for 12 * 10s = 120 seconds
+              RETRY_INTERVAL=10
+
+              while [ -z "$API_GATEWAY_IP" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                API_GATEWAY_IP=$(kubectl get service api-gateway --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+                if [ -z "$API_GATEWAY_IP" ]; then
+                  RETRY_COUNT=$((RETRY_COUNT + 1))
+                  echo "API Gateway IP not available yet. Retry $RETRY_COUNT/$MAX_RETRIES. Waiting $RETRY_INTERVAL seconds..."
+                  sleep $RETRY_INTERVAL
+                else
+                  echo "API Gateway IP found: $API_GATEWAY_IP"
+                  break
+                fi
+              done
+
+              if [ -z "$API_GATEWAY_IP" ]; then
+                echo "##vso[task.logissue type=error;]Failed to get API Gateway Load Balancer IP after $MAX_RETRIES retries."
+                kubectl get service api-gateway --namespace default -o yaml # Print service details for debugging
                 exit 1
-              }
-            displayName: 'Wait for API Gateway Public IP'
-          
-          - bash: |
-              API_GATEWAY_IP=$(kubectl get service api-gateway --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+              fi
+              
+              echo "Successfully retrieved API_GATEWAY_IP: $API_GATEWAY_IP"
               echo "##vso[task.setvariable variable=E2E_BASE_URL;isOutput=true]http://$API_GATEWAY_IP:8080"
-              echo "API_GATEWAY_IP extracted $API_GATEWAY_IP"
             name: SetE2EVar
             displayName: 'Extract and Set API Gateway IP'
 
   - stage: E2E
     displayName: 'Run E2E'
-    dependsOn: DeployToAKS
+    dependsOn:
+      - DeployToAKS
     variables:
-      E2E_BASE_URL: $[ stageDependencies.DeployToAKS.DeployJob.outputs['SetE2EVar.E2E_BASE_URL'] ]
+      E2E_BASE_URL_FOR_NEWMAN: $[ stageDependencies.DeployToAKS.DeployJob.outputs['SetE2EVar.E2E_BASE_URL'] ]
     jobs:
-      - job: Newman
+      - job: NewmanJob
         steps:
+          - script: |
+              echo "E2E_BASE_URL_FOR_NEWMAN in E2E stage is $(E2E_BASE_URL_FOR_NEWMAN)"
+              if [ -z "$(E2E_BASE_URL_FOR_NEWMAN)" ] || [ "$(E2E_BASE_URL_FOR_NEWMAN)" == "http://:8080" ]; then
+                echo "##vso[task.logissue type=error;]E2E_BASE_URL_FOR_NEWMAN is empty or invalid in E2E stage."
+              fi
+            displayName: 'Debug E2E Base URL in E2E Stage'
           - task: AzureCLI@2
             inputs:
               azureSubscription: $(azureSubscription)
@@ -295,49 +316,70 @@ stages:
               collectionSourceType: 'file'
               collectionFileSource: 'postman-collections/E2E-tests.postman_collection.json'
               environmentSourceType: 'none'
-              globalVars: 'base_url=$(E2E_BASE_URL)'
+              globalVars: 'base_url=$(E2E_BASE_URL_FOR_NEWMAN)'
               reporters: 'htmlextra'
               htmlExtraDarkTheme: true
               htmlExtraLogs: true
               htmlExtraTestPaging: true
-            displayName: 'Run Newman'
+            displayName: 'Run Newman E2E Tests'
+
 
   - stage: Locust
     displayName: 'Run Locust'
-    dependsOn: E2E
+    dependsOn:
+      - E2E
+      - DeployToAKS
     variables:
-      E2E_BASE_URL: $[ stageDependencies.DeployToAKS.DeployJob.outputs['SetE2EVar.E2E_BASE_URL'] ]
+      LOCUST_HOST_URL_FROM_OUTPUT: $[ stageDependencies.DeployToAKS.DeployJob.outputs['SetE2EVar.E2E_BASE_URL'] ]
     jobs:
-      - job: Locust
-        displayName: 'Execute Azure Load Test with Locust'
+      - job: DebugAndRunLocustJob
+        displayName: 'Debug Variables and Run Locust'
         steps:
           - task: UsePythonVersion@0
             inputs:
               versionSpec: '3.x'
               addToPath: true
+            displayName: 'Use Python 3.x'
+
           - script: |
               python -m pip install --upgrade pip
               pip install locust
             displayName: 'Install Locust'
-          - script: |
-              echo "E2E_BASE_URL for Locust is: '$(E2E_BASE_URL)'"
-              echo "LOCUST_USERS is: '$(LOCUST_USERS)'"
-              echo "LOCUST_SPAWN_RATE is: '$(LOCUST_SPAWN_RATE)'"
-              echo "LOCUST_RUN_TIME is: '$(LOCUST_RUN_TIME)'"
 
-              if [ -z "$(E2E_BASE_URL)" ]; then
-                echo "Error: E2E_BASE_URL is empty. Locust tests will likely fail because the host will default to http://api-gateway:8080 which is not resolvable from the agent."
-                # Consider adding 'exit 1' here if you want the pipeline to fail immediately if E2E_BASE_URL is empty.
+          - script: |
+              echo "--- Locust Stage Variable Debugging ---"
+              echo "Value of LOCUST_HOST_URL_FROM_OUTPUT (defined at Locust stage level): '$(LOCUST_HOST_URL_FROM_OUTPUT)'"
+              echo "Value of LOCUST_USERS (pipeline variable): '$(LOCUST_USERS)'"
+              echo "Value of LOCUST_SPAWN_RATE (pipeline variable): '$(LOCUST_SPAWN_RATE)'"
+              echo "Value of LOCUST_RUN_TIME (pipeline variable): '$(LOCUST_RUN_TIME)'"
+              echo "---------------------------------------"
+
+              LOCAL_HOST_FOR_LOCUST_SCRIPT="$(LOCUST_HOST_URL_FROM_OUTPUT)"
+
+              if [ -z "$LOCAL_HOST_FOR_LOCUST_SCRIPT" ] || [ "$LOCAL_HOST_FOR_LOCUST_SCRIPT" == "http://:8080" ]; then
+                echo "##vso[task.logissue type=error;]LOCAL_HOST_FOR_LOCUST_SCRIPT is empty or invalid ('$LOCAL_HOST_FOR_LOCUST_SCRIPT') in Locust stage. Check stageDependencies syntax, names, and DeployToAKS stage logs."
+                echo "Falling back to default host from locustfile.py, which will likely fail."
+                # exit 1 # Consider failing the pipeline if the URL is not correctly propagated
+              else
+                echo "LOCUST_HOST_URL_FROM_OUTPUT is valid. Proceeding with value: '$LOCAL_HOST_FOR_LOCUST_SCRIPT'"
               fi
               
-              echo "Running Locust load tests..."
-              cd locust
+              echo "Current directory before cd: $(pwd)"
+              # Ensure the 'locust' directory is directly under the root of the checkout
+              if [ -d "$(Build.SourcesDirectory)/locust" ]; then
+                cd "$(Build.SourcesDirectory)/locust"
+                echo "Current directory after cd: $(pwd)"
+                echo "Contents of locust directory:"
+                ls -la
+              else
+                echo "##vso[task.logissue type=error;]Locust directory not found at $(Build.SourcesDirectory)/locust"
+                exit 1
+              fi
               
-              # Set LOCUST_HOST environment variable
-              export LOCUST_HOST="$(E2E_BASE_URL)"
-              echo "LOCUST_HOST environment variable set to: '$LOCUST_HOST'"
+              export LOCUST_HOST="$LOCAL_HOST_FOR_LOCUST_SCRIPT"
+              echo "LOCUST_HOST environment variable will be set to: '$LOCUST_HOST' for locust execution"
               
-              # Run Locust without --host, it will pick up LOCUST_HOST from the environment
+              echo "Executing Locust..."
               python3 -m locust -f locustfile.py \
                 --headless \
                 -u $(LOCUST_USERS) \
@@ -345,10 +387,27 @@ stages:
                 -t $(LOCUST_RUN_TIME) \
                 --csv=load_test_report \
                 --html=load_test_report.html
-            displayName: 'Run Locust Test'
+              
+              echo "Locust execution finished. Checking for report files in $(pwd):"
+              ls -la
+            displayName: 'Debug and Run Locust Test'
+            
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Locust HTML Report'
             inputs:
-              pathToPublish: 'locust/load_test_report.html'
-              artifactName: 'LocustReport'
+              pathToPublish: '$(Build.SourcesDirectory)/locust/load_test_report.html' 
+              artifactName: 'LocustReportHTML'
               publishLocation: 'Container'
+            condition: always()
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Locust CSV Reports'
+            inputs:
+              pathtoPublish: |
+                $(Build.SourcesDirectory)/locust/load_test_report_stats.csv
+                $(Build.SourcesDirectory)/locust/load_test_report_failures.csv
+                $(Build.SourcesDirectory)/locust/load_test_report_exceptions.csv
+                $(Build.SourcesDirectory)/locust/load_test_report_stats_history.csv
+              artifactName: 'LocustReportsCSV'
+              publishLocation: 'Container'
+            condition: always()
