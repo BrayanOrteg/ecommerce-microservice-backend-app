@@ -293,18 +293,33 @@ stages:
     jobs:
       - job: OWASPJob
         steps:
-          - task: owaspzap@1
+          - script: |
+              set -e # Exit immediately if a command exits with a non-zero status.
+              echo "Creating ZAP working directory..."
+              mkdir -p $(System.DefaultWorkingDirectory)/owaspzap
+              echo "Pulling ZAP Docker image..."
+              docker pull ghcr.io/zaproxy/zaproxy:stable
+              echo "Running ZAP baseline scan against $(ZAP_TARGET_URL_FROM_DEPLOY)..."
+              docker run --rm \
+                -v $(System.DefaultWorkingDirectory)/owaspzap:/zap/wrk/:rw \
+                ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+                -t $(ZAP_TARGET_URL_FROM_DEPLOY) \
+                -J report.json -r report.html
+              echo "ZAP scan finished. Reports are in $(System.DefaultWorkingDirectory)/owaspzap"
+            displayName: 'Run OWASP ZAP Baseline Scan'
+
+          - task: PublishBuildArtifacts@1
             inputs:
-              threshold: '100000'
-              scantype: 'targetedScan'
-              url: '$(ZAP_TARGET_URL_FROM_DEPLOY)'
-              port: '8080'
+              PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
+              ArtifactName: 'ZAPScanResults'
+            displayName: 'Publish ZAP Scan Results'
+            condition: succeededOrFailed()
           
 
   - stage: E2E
     displayName: 'Run E2E'
     dependsOn:
-      - DeployToAKS
+      - OWASP
     variables:
       E2E_BASE_URL_FOR_NEWMAN: $[ stageDependencies.DeployToAKS.DeployJob.outputs['SetE2EVar.E2E_BASE_URL'] ]
     jobs:
