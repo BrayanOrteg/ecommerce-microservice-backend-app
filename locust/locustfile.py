@@ -1,10 +1,12 @@
+import os
 from locust import HttpUser, task, between
 
 class EcommerceLoadTest(HttpUser):
     wait_time = between(1, 5)  # Wait time between tasks
 
-    # Define the base host for the API Gateway
-    host = "http://api-gateway:8080/"
+    # Define the base host for the API Gateway, reading from an environment variable
+    # If the variable is not set, default to http://api-gateway:8080/
+    host = os.getenv("LOCUST_HOST", "http://api-gateway:8080/")
 
     @task
     def get_users(self):
