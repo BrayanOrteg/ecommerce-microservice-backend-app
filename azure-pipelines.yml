@@ -273,7 +273,8 @@ stages:
           - task: Npm@1
             inputs:
               command: 'custom'
-              customCommand: 'install newman -g'
+              customCommand: 'install newman newman-reporter-htmlextra -g'
+            displayName: 'Install Newman and htmlextra reporter'
           - task: NewmanPostman@4
             inputs:
               collectionSourceType: 'file'
@@ -284,3 +285,4 @@ stages:
               htmlExtraDarkTheme: true
               htmlExtraLogs: true
               htmlExtraTestPaging: true
+            displayName: 'Run Newman'
