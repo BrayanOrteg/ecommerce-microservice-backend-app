@@ -1,0 +1,16 @@
+version: v0.1
+testName: EcommerceAppLoadTest
+displayName: E-commerce Application Load Test
+description: Performs Locust load testing on the e-commerce application endpoints using locustfile.py.
+engineInstances: 1
+
+testPlan: locustfile.py
+
+configurationFiles:
+  - locust.conf
+
+failureCriteria:
+  - condition: avg(response_time_ms) > 3000
+    action: stop
+  - condition: percentage(error) > 9
+    action: stop

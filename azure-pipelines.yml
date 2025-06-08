@@ -20,6 +20,9 @@ variables:
   IMAGE_TAG_SUFFIX: ':0.1.0'
   COMPOSE_YML: 'compose.${{ parameters.profile }}.yml'
   E2E_BASE_URL: ''
+  LOCUST_USERS: '10'
+  LOCUST_SPAWN_RATE: '1'
+  LOCUST_RUN_TIME: '1m'
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -298,3 +301,27 @@ stages:
               htmlExtraLogs: true
               htmlExtraTestPaging: true
             displayName: 'Run Newman'
+
+  - stage: Locust
+    displayName: 'Run Locuts'
+    dependsOn: E2E
+    variables:
+      E2E_BASE_URL: $[ stageDependencies.DeployToAKS.DeployJob.outputs['SetE2EVar.E2E_BASE_URL'] ]
+      jobs:
+        - job: Locust
+          displayName: 'Execute Azure Load Test with Locust'
+          steps:
+            - task: AzureLoadTest@1
+              inputs:
+                azureSubscription: 'Azure for Students(63bc158b-199a-44a3-8adf-89c61f840a33)'
+                loadTestConfigFile: 'locust/loadtest.yaml'
+                loadTestResourceGroup: '$(Tests)'
+                loadTestResource: 'ecommerce-locust'
+                loadTestRunName: 'Locust Test Run $(Build.BuildId)-$(System.JobAttempt)'
+                loadTestRunDescription: 'Automated Locust load test for build $(Build.BuildId)'
+                
+                env: |
+                  LOCUST_HOST=$(E2E_BASE_URL)
+                  LOCUST_USERS=$(LOCUST_USERS)
+                  LOCUST_SPAWN_RATE=$(LOCUST_SPAWN_RATE)
+                  LOCUST_RUN_TIME=$(LOCUST_RUN_TIME)
