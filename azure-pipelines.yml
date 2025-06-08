@@ -215,10 +215,10 @@ stages:
               kubernetesCluster: $(CLUSTER_NAME)
               namespace: 'default'
               manifests: |
-                $(K8S_MANIFEST_DIR)/order-service.yaml,
-                $(K8S_MANIFEST_DIR)/payment-service.yaml,
-                $(K8S_MANIFEST_DIR)/product-service.yaml,
-                $(K8S_MANIFEST_DIR)/shipping-service.yaml,
-                $(K8S_MANIFEST_DIR)/user-service.yaml,
-                $(K8S_MANIFEST_DIR)/favourite-service.yaml,
+                $(K8S_MANIFEST_DIR)/order-service.yaml
+                $(K8S_MANIFEST_DIR)/payment-service.yaml
+                $(K8S_MANIFEST_DIR)/product-service.yaml
+                $(K8S_MANIFEST_DIR)/shipping-service.yaml
+                $(K8S_MANIFEST_DIR)/user-service.yaml
+                $(K8S_MANIFEST_DIR)/favourite-service.yaml
                 $(K8S_MANIFEST_DIR)/proxy-client.yaml
