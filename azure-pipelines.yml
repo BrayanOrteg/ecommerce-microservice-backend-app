@@ -22,7 +22,7 @@ variables:
   E2E_BASE_URL: ''
   LOCUST_USERS: '10'
   LOCUST_SPAWN_RATE: '1'
-  LOCUST_RUN_TIME: '1m'
+  LOCUST_RUN_TIME: '30s'
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -320,16 +320,31 @@ stages:
               pip install locust
             displayName: 'Install Locust'
           - script: |
+              echo "E2E_BASE_URL for Locust is: '$(E2E_BASE_URL)'"
+              echo "LOCUST_USERS is: '$(LOCUST_USERS)'"
+              echo "LOCUST_SPAWN_RATE is: '$(LOCUST_SPAWN_RATE)'"
+              echo "LOCUST_RUN_TIME is: '$(LOCUST_RUN_TIME)'"
+
+              if [ -z "$(E2E_BASE_URL)" ]; then
+                echo "Error: E2E_BASE_URL is empty. Locust tests will likely fail because the host will default to http://api-gateway:8080 which is not resolvable from the agent."
+                # Consider adding 'exit 1' here if you want the pipeline to fail immediately if E2E_BASE_URL is empty.
+              fi
+              
               echo "Running Locust load tests..."
               cd locust
+              
+              # Set LOCUST_HOST environment variable
+              export LOCUST_HOST="$(E2E_BASE_URL)"
+              echo "LOCUST_HOST environment variable set to: '$LOCUST_HOST'"
+              
+              # Run Locust without --host, it will pick up LOCUST_HOST from the environment
               python3 -m locust -f locustfile.py \
                 --headless \
-                -u 100 \
-                -r 20 \
-                -t 30s \
+                -u $(LOCUST_USERS) \
+                -r $(LOCUST_SPAWN_RATE) \
+                -t $(LOCUST_RUN_TIME) \
                 --csv=load_test_report \
-                --html=load_test_report.html \
-                --host=$(E2E_BASE_URL)
+                --html=load_test_report.html
             displayName: 'Run Locust Test'
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Locust HTML Report'
