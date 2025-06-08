@@ -16,8 +16,9 @@ variables:
   dockerHubServiceConnection: 'ecommerce-docker'
   RESOURCE_GROUP: 'rg-${{ parameters.profile }}'
   CLUSTER_NAME: 'aks-${{ parameters.profile }}'
-  K8S_MANIFEST_DIR: 'k8s'
+  K8S_MANIFEST_DIR: 'k8s/${{ parameters.profile }}'
   IMAGE_TAG_SUFFIX: ':0.1.0'
+  COMPOSE_YML: 'compose.${{ parameters.profile }}.yml'
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -99,7 +100,7 @@ stages:
               command: 'login'
 
           - script: |
-              docker compose -f compose.yml build
+              docker compose -f $(COMPOSE_YML) build
             displayName: 'Build Docker Images'
 
           - script: |
@@ -133,7 +134,7 @@ stages:
             displayName: 'Scan Docker Images with Trivy'
 
           - script: |
-              docker compose -f compose.yml push
+              docker compose -f $(COMPOSE_YML) push
             displayName: 'Push Docker Images'
 
           - task: Docker@2
@@ -203,3 +204,21 @@ stages:
               echo "Waiting for Cloud Config to be healthy..."
               kubectl rollout status deployment/cloud-config --timeout=300s --namespace default
             displayName: 'Wait for Cloud Config'
+
+          - task: KubernetesManifest@1
+            displayName: 'Deploy Every Service'
+            inputs:
+              action: 'deploy'
+              connectionType: 'azureResourceManager'
+              azureSubscriptionConnection: $(azureSubscription)
+              azureResourceGroup: $(RESOURCE_GROUP)
+              kubernetesCluster: $(CLUSTER_NAME)
+              namespace: 'default'
+              manifests: |
+                $(K8S_MANIFEST_DIR)/order-service.yaml,
+                $(K8S_MANIFEST_DIR)/payment-service.yaml,
+                $(K8S_MANIFEST_DIR)/product-service.yaml,
+                $(K8S_MANIFEST_DIR)/shipping-service.yaml,
+                $(K8S_MANIFEST_DIR)/user-service.yaml,
+                $(K8S_MANIFEST_DIR)/favourite-service.yaml,
+                $(K8S_MANIFEST_DIR)/proxy-client.yaml
