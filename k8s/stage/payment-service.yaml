@@ -46,13 +46,6 @@ spec:
               value: "http://service-discovery:8761/eureka/"
             - name: EUREKA_INSTANCE
               value: "payment-service"
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "200m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"          
           readinessProbe:
             httpGet:
               path: /payment-service/actuator/health
