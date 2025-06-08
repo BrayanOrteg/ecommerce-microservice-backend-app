@@ -311,16 +311,29 @@ stages:
       - job: Locust
         displayName: 'Execute Azure Load Test with Locust'
         steps:
-          - task: AzureLoadTest@1
+          - task: UsePythonVersion@0
             inputs:
-              azureSubscription: 'Azure for Students(63bc158b-199a-44a3-8adf-89c61f840a33)'
-              loadTestConfigFile: 'locust/loadtest.yaml'
-              resourceGroup: 'Tests'
-              loadTestResource: 'ecommerce-locust'
-              loadTestRunName: 'Locust Test Run $(Build.BuildId)-$(System.JobAttempt)'
-              loadTestRunDescription: 'Automated Locust load test for build $(Build.BuildId)'
-              env: |
-                LOCUST_HOST=$(E2E_BASE_URL)
-                LOCUST_USERS=$(LOCUST_USERS)
-                LOCUST_SPAWN_RATE=$(LOCUST_SPAWN_RATE)
-                LOCUST_RUN_TIME=$(LOCUST_RUN_TIME)
+              versionSpec: '3.x'
+              addToPath: true
+          - script: |
+              python -m pip install --upgrade pip
+              pip install locust
+            displayName: 'Install Locust'
+          - script: |
+              echo "Running Locust load tests..."
+              cd locust
+              python3 -m locust -f locustfile.py \
+                --headless \
+                -u 100 \
+                -r 20 \
+                -t 30s \
+                --csv=load_test_report \
+                --html=load_test_report.html \
+                --host=$(E2E_BASE_URL)
+            displayName: 'Run Locust Test'
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Locust HTML Report'
+            inputs:
+              pathToPublish: 'locust/load_test_report.html'
+              artifactName: 'LocustReport'
+              publishLocation: 'Container'
