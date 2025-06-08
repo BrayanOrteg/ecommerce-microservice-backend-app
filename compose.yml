@@ -4,6 +4,9 @@ services:
     image: openzipkin/zipkin
     ports:
       - 9411:9411
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=zipkin-container
   service-discovery-container:
     build:
       context: ./service-discovery
@@ -32,6 +35,7 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=cloud-config-container
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9296/actuator/health || exit 1"]
       interval: 30s
@@ -53,6 +57,8 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=api-gateway-container
     depends_on:
       cloud-config-container:
         condition: service_healthy
@@ -70,6 +76,8 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=proxy-client-container
     depends_on:
       cloud-config-container:
         condition: service_healthy
@@ -87,6 +95,8 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=order-service-container
     depends_on:
       cloud-config-container:
         condition: service_healthy
@@ -104,6 +114,8 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=payment-service-container
     depends_on:
       cloud-config-container:
         condition: service_healthy
@@ -121,6 +133,8 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=product-service-container
     depends_on:
       cloud-config-container:
         condition: service_healthy
@@ -138,6 +152,8 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=shipping-service-container
     depends_on:
       cloud-config-container:
         condition: service_healthy
@@ -155,6 +171,8 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=user-service-container
     depends_on:
       cloud-config-container:
         condition: service_healthy
@@ -172,6 +190,8 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=favourite-service-container
     depends_on:
       cloud-config-container:
         condition: service_healthy
