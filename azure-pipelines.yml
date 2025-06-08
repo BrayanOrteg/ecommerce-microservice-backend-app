@@ -259,7 +259,7 @@ stages:
               }
 
               API_GATEWAY_IP=$(kubectl get service api-gateway --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-              echo "\##vso[task.setvariable variable=E2E_BASE_URL]http://$API_GATEWAY_IP:8080"
+              echo '##vso[task.setvariable variable=E2E_BASE_URL]http://$API_GATEWAY_IP:8080'
               echo "API_GATEWAY_IP extracted $API_GATEWAY_IP" # For debugging
               echo "E2E_BASE_URL set to http://$API_GATEWAY_IP:8080" # For debugging
             displayName: 'Get API Gateway Public IP'
@@ -270,6 +270,14 @@ stages:
     jobs:
       - job: Newman
         steps:
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: 'az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --overwrite-existing'
+          - script: |
+              API_GATEWAY_IP=$(kubectl get service api-gateway --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
           - task: Npm@1
             inputs:
               command: 'custom'
@@ -280,7 +288,7 @@ stages:
               collectionSourceType: 'file'
               collectionFileSource: 'postman-collections/E2E-tests.postman_collection.json'
               environmentSourceType: 'none'
-              globalVars: 'base_url=$(E2E_BASE_URL)'
+              globalVars: 'base_url=http://$API_GATEWAY_IP:8080'
               reporters: 'htmlextra'
               htmlExtraDarkTheme: true
               htmlExtraLogs: true
