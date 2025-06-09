@@ -17,7 +17,7 @@ variables:
   RESOURCE_GROUP: 'rg-${{ parameters.profile }}'
   CLUSTER_NAME: 'aks-${{ parameters.profile }}'
   K8S_MANIFEST_DIR: 'k8s/${{ parameters.profile }}'
-  IMAGE_TAG_SUFFIX: ':0.1.0'
+  IMAGE_TAG_SUFFIX: ':${{ parameters.profile }}'
   COMPOSE_YML: 'compose.${{ parameters.profile }}.yml'
   E2E_BASE_URL: ''
   LOCUST_USERS: '10'
@@ -73,10 +73,21 @@ stages:
               mavenPomFile: 'pom.xml'
               goals: 'test'
               publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              codeCoverageToolOption: 'JaCoCo'
               javaHomeOption: 'JDKVersion'
               mavenVersionOption: 'Default'
               mavenAuthenticateFeed: false
               effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+
+          - task: PublishCodeCoverageResults@2
+            inputs:
+              summaryFileLocation: '**/site/jacoco/jacoco.xml'
+              reportDirectory: '**/site/jacoco'
+              codecoverageTool: 'jacoco'
+            displayName: 'Publish Code Coverage Results'
+            condition: succeededOrFailed()
 
   - stage: PushDockerImages
     displayName: 'Build, Test and Push Docker Images'
