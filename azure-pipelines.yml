@@ -320,6 +320,7 @@ stages:
     displayName: 'Run E2E'
     dependsOn:
       - OWASP
+      - DeployToAKS
     variables:
       E2E_BASE_URL_FOR_NEWMAN: $[ stageDependencies.DeployToAKS.DeployJob.outputs['SetE2EVar.E2E_BASE_URL'] ]
     jobs:
