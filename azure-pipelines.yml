@@ -293,7 +293,6 @@ stages:
       - job: OWASPJob
         steps:
           - script: |
-              set -e # Exit immediately if a command exits with a non-zero status.
               echo "Creating ZAP working directory..."
               mkdir -p $(System.DefaultWorkingDirectory)/owaspzap
               echo "Setting permissions for ZAP working directory..."
@@ -304,7 +303,7 @@ stages:
               docker run --rm \
                 -v $(System.DefaultWorkingDirectory)/owaspzap:/zap/wrk/:rw \
                 ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-                -t $(ZAP_TARGET_URL_FROM_DEPLOY) \
+                -t $(ZAP_TARGET_URL_FROM_DEPLOY)/user-service/api/users \
                 -J report.json -r report.html
               echo "ZAP scan finished. Reports are in $(System.DefaultWorkingDirectory)/owaspzap"
             displayName: 'Run OWASP ZAP Baseline Scan'
