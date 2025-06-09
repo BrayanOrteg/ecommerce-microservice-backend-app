@@ -362,11 +362,18 @@ stages:
               collectionFileSource: 'postman-collections/E2E-tests.postman_collection.json'
               environmentSourceType: 'none'
               globalVars: 'base_url=$(E2E_BASE_URL_FOR_NEWMAN)'
-              reporters: 'junit'
+              reporters: 'htmlextra'
               htmlExtraDarkTheme: true
               htmlExtraLogs: true
               htmlExtraTestPaging: true
             displayName: 'Run Newman E2E Tests'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(System.DefaultWorkingDirectory)/newman'
+              ArtifactName: 'NewmanE2EReport'
+            displayName: 'Publish Newman E2E Report'
+            condition: succeededOrFailed()
 
 
   - stage: Locust
