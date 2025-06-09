@@ -280,7 +280,6 @@ stages:
               
               echo "Successfully retrieved API_GATEWAY_IP: $API_GATEWAY_IP"
               echo "##vso[task.setvariable variable=E2E_BASE_URL;isOutput=true]http://$API_GATEWAY_IP:8080"
-              echo "##vso[task.setvariable variable=ZAP_ROOT_URL;isOutput=true]http://$API_GATEWAY_IP"
             name: SetE2EVar
             displayName: 'Extract and Set API Gateway IP'
 
@@ -289,7 +288,7 @@ stages:
     dependsOn:
       - DeployToAKS
     variables:
-      ZAP_TARGET_URL_FROM_DEPLOY: $[ stageDependencies.DeployToAKS.DeployJob.outputs['SetE2EVar.ZAP_ROOT_URL'] ]
+      ZAP_TARGET_URL_FROM_DEPLOY: $[ stageDependencies.DeployToAKS.DeployJob.outputs['SetE2EVar.E2E_BASE_URL'] ]
     jobs:
       - job: OWASPJob
         steps:
