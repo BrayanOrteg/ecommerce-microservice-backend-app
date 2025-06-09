@@ -296,6 +296,8 @@ stages:
               set -e # Exit immediately if a command exits with a non-zero status.
               echo "Creating ZAP working directory..."
               mkdir -p $(System.DefaultWorkingDirectory)/owaspzap
+              echo "Setting permissions for ZAP working directory..."
+              sudo chmod -R 777 $(System.DefaultWorkingDirectory)/owaspzap
               echo "Pulling ZAP Docker image..."
               docker pull ghcr.io/zaproxy/zaproxy:stable
               echo "Running ZAP baseline scan against $(ZAP_TARGET_URL_FROM_DEPLOY)..."
