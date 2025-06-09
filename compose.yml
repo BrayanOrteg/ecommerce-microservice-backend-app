@@ -30,12 +30,13 @@ services:
       context: ./cloud-config
     image: kenbra/cloud-config-ecommerce-boot:0.1.0
     ports:
-      - 9296:9296
+      - "9296:9296"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
       - EUREKA_INSTANCE_HOSTNAME=cloud-config-container
+      - SPRING_RABBITMQ_HOST=rabbitmq
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9296/actuator/health || exit 1"]
       interval: 30s
@@ -47,6 +48,8 @@ services:
         condition: service_healthy
       zipkin-container:
         condition: service_started
+      rabbitmq:
+        condition: service_started 
   api-gateway-container:
     build:
       context: ./api-gateway
@@ -128,19 +131,22 @@ services:
       context: ./product-service
     image: kenbra/product-service-ecommerce-boot:0.1.0
     ports:
-      - 8500:8500
+      - "8500:8500"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
       - EUREKA_INSTANCE_HOSTNAME=product-service-container
+      - SPRING_RABBITMQ_HOST=rabbitmq
     depends_on:
       cloud-config-container:
         condition: service_healthy
       service-discovery-container:
         condition: service_healthy
       zipkin-container:
+        condition: service_started
+      rabbitmq:
         condition: service_started
   shipping-service-container:
     build:
@@ -199,3 +205,16 @@ services:
         condition: service_healthy
       zipkin-container:
         condition: service_started
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672" 
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+volumes:
+  rabbitmq_data:
