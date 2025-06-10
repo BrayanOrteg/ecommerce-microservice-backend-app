@@ -108,6 +108,22 @@
 - Service Discovery
 - Database per Service
 - Command and Query Responsibility Segregation (CQRS)
-- Saga (implementación parcial)
+- Saga
+
+---
+
+## Patrones nuevos implementados
+
+### Retry Pattern
+**Propósito:** Permite reintentar automáticamente operaciones fallidas ante errores transitorios, mejorando la resiliencia frente a fallos temporales de red o servicios externos.
+**Beneficios:** Mayor tolerancia a fallos, reducción de errores visibles para el usuario, robustez en la comunicación entre microservicios.
+
+### Cache Aside Pattern
+**Propósito:** Optimiza el acceso a datos almacenando en caché los resultados de consultas frecuentes y manteniendo la coherencia al invalidar el caché en operaciones de escritura.
+**Beneficios:** Reducción de la latencia, menor carga sobre los servicios backend, mejora del rendimiento general.
+
+### Feature Toggle Pattern
+**Propósito:** Permite habilitar o deshabilitar funcionalidades de la aplicación en tiempo de ejecución sin necesidad de desplegar nuevo código.
+**Beneficios:** Facilita pruebas A/B, despliegues progresivos y gestión de funcionalidades experimentales.
 
 
