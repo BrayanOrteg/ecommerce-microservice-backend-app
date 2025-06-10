@@ -70,6 +70,11 @@ management:
     health:
       show-details: always
 
+logging:
+  level:
+    org.springframework.cache: TRACE
+    org.springframework.cache.interceptor: TRACE
+
 
 
 
