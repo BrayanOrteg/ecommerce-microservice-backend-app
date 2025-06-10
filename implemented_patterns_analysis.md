@@ -1,0 +1,113 @@
+# Análisis de patrones implementados
+
+---
+
+## 1. Circuit Breaker Pattern
+
+**Estado:** Implementado completamente usando Resilience4j
+
+**Detalles de Implementación:**
+- **Librería:** Resilience4j Circuit Breaker
+- **Ubicación:** `product-service/src/main/java/com/selimhorri/app/`
+- **Configuración:** Definida en los archivos de propiedades de la aplicación
+
+**Beneficios:**
+- Previene fallos en cascada
+- Degradación controlada ante fallos de servicios externos
+- Recuperación automática
+- Métricas y monitoreo
+
+---
+
+## 2. API Gateway Pattern 
+
+**Estado:** Implementado completamente usando Spring Cloud Gateway
+
+**Detalles de Implementación:**
+- **Librería:** Spring Cloud Gateway
+- **Ubicación:** `api-gateway/src/main/java/com/selimhorri/app/`
+- **Características:** Enrutamiento, balanceo de carga, integración de seguridad (JWT), transformación de peticiones y respuestas
+
+**Beneficios:**
+- Punto de entrada único para los clientes
+- Balanceo de carga entre instancias de servicios
+- Manejo de autenticación y autorización
+- Integración con Service Discovery
+
+---
+
+## 3. Service Discovery Pattern
+
+**Estado:** Implementado completamente usando Netflix Eureka
+
+**Detalles de Implementación:**
+- **Librería:** Netflix Eureka (Spring Cloud Netflix)
+- **Componentes:** Eureka Server y Eureka Clients
+- **Ubicación:** `service-discovery/` y configuración en todos los microservicios
+
+**Beneficios:**
+- Registro y descubrimiento automático de servicios
+- Balanceo de carga dinámico
+- Tolerancia a fallos en la localización de servicios
+
+---
+
+## 4. Database per Service Pattern
+
+**Estado:** Implementado en todos los microservicios
+
+**Detalles de Implementación:**
+- **Ubicación:** Cada microservicio mantiene su propia base de datos (ver carpetas `user-service/`, `product-service/`, `order-service/`, `payment-service/`, `shipping-service/`, `favourite-service/`)
+- No existe compartición directa de datos entre servicios
+
+**Beneficios:**
+- Aislamiento y encapsulamiento de datos
+- Escalabilidad y optimización independiente
+- Desacoplamiento y despliegue independiente
+
+---
+
+## 5. Command and Query Responsibility Segregation (CQRS Pattern)
+
+**Estado:** Implementado mediante separación de DTOs y capas de servicio
+
+**Detalles de Implementación:**
+- **Ubicación:** Presente en todos los microservicios principales (`user-service/`, `product-service/`, `order-service/`, etc.)
+- Separación de operaciones de lectura y escritura
+- Uso de diferentes DTOs para comandos y consultas
+
+**Beneficios:**
+- Separación clara de responsabilidades
+- Modelos optimizados para lectura y escritura
+- Mejor mantenibilidad y rendimiento
+
+---
+
+## 6. Saga Pattern
+
+**Estado:** Implementado mediante coordinación orquestada vía REST
+
+**Detalles de Implementación:**
+- **Ubicación:** Principalmente en el flujo de órdenes y pagos (`order-service/`, `payment-service/`, `shipping-service/`)
+- Orquestación de transacciones distribuidas usando REST
+- Coordinación entre servicios de pago, envío y órdenes
+- Compensación de transacciones ante fallos
+
+**Beneficios:**
+- Coordinación de transacciones distribuidas
+- Manejo de compensaciones y recuperación ante fallos
+- Orquestación de procesos de negocio
+
+---
+
+## Resumen
+
+### Patrones implementados en el sistema:
+- Circuit Breaker
+- API Gateway
+- Service Discovery
+- Database per Service
+- Command and Query Responsibility Segregation (CQRS)
+- Saga (implementación parcial)
+
+
