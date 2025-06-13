@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.0.0...v1.0.1) (2025-06-13)
+
+
+### Bug Fixes
+
+* deleted prs fails ([816caaa](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/816caaa441c28f923f3ca452618f22c5a7b56c5f))
+
 # 1.0.0 (2025-06-13)
 
 
