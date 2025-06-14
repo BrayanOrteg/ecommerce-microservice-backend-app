@@ -184,11 +184,6 @@ stages:
               namespace: 'default'
               manifests: '$(K8S_MANIFEST_DIR)/zipkin.yaml'
 
-          - script: |
-              echo "Waiting for Zipkin to be healthy..."
-              kubectl rollout status deployment/zipkin --timeout=300s --namespace default
-            displayName: 'Wait for Zipkin'
-
           - task: KubernetesManifest@1
             displayName: 'Deploy Service Discovery'
             inputs:
@@ -200,11 +195,6 @@ stages:
               namespace: 'default'
               manifests: '$(K8S_MANIFEST_DIR)/service-discovery.yaml'
 
-          - script: |
-              echo "Waiting for Service Discovery to be healthy..."
-              kubectl rollout status deployment/service-discovery --timeout=300s --namespace default
-            displayName: 'Wait for Service Discovery'
-
           - task: KubernetesManifest@1
             displayName: 'Deploy Cloud Config'
             inputs:
@@ -215,11 +205,6 @@ stages:
               kubernetesCluster: $(CLUSTER_NAME)
               namespace: 'default'
               manifests: '$(K8S_MANIFEST_DIR)/cloud-config.yaml'
-
-          - script: |
-              echo "Waiting for Cloud Config to be healthy..."
-              kubectl rollout status deployment/cloud-config --timeout=300s --namespace default
-            displayName: 'Wait for Cloud Config'
 
           - task: KubernetesManifest@1
             displayName: 'Deploy Every Service'
@@ -239,30 +224,6 @@ stages:
                 $(K8S_MANIFEST_DIR)/user-service.yaml
                 $(K8S_MANIFEST_DIR)/favourite-service.yaml
                 $(K8S_MANIFEST_DIR)/proxy-client.yaml
-
-          - script: |
-              echo "Waiting for all microservices to be healthy..."
-              declare -a deployments=(
-                "api-gateway"
-                "order-service"
-                "payment-service"
-                "product-service"
-                "shipping-service"
-                "user-service"
-                "favourite-service"
-                "proxy-client"
-              )
-
-              for deployment in "${deployments[@]}"; do
-                echo "--- Waiting for deployment $deployment ---"
-                kubectl rollout status deployment/$deployment --timeout=300s --namespace default || {
-                  echo "##vso[task.logissue type=error;]Deployment $deployment did not become healthy within the timeout."
-                  exit 1
-                }
-                echo "Deployment $deployment is healthy."
-              done
-              echo "All microservices deployments are healthy."
-            displayName: 'Wait for all Microservices'
 
           - bash: |
               echo "Attempting to get API Gateway Load Balancer IP..."
