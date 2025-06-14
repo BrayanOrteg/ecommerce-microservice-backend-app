@@ -83,7 +83,26 @@
 
 ---
 
-## 6. Saga Pattern
+## 6. External Configuration Pattern (Cloud Config)
+
+**Estado:** Implementado completamente usando Spring Cloud Config
+
+**Detalles de Implementación:**
+- **Librería:** Spring Cloud Config Server y Client
+- **Ubicación:** `cloud-config/` como servidor y configuración en todos los microservicios como clientes
+- **Repositorio:** Configuraciones centralizadas en GitHub (https://github.com/BrayanOrteg/cloud-config-server)
+- **Características:** Configuración externa, versionado, actualización dinámica, soporte para múltiples entornos
+
+**Beneficios:**
+- Gestión centralizada de configuraciones
+- Separación de configuración del código
+- Soporte para múltiples entornos (dev, stage, prod)
+- Actualización de configuraciones sin redepliegue
+- Versionado y auditoría de cambios de configuración
+
+---
+
+## 7. Saga Pattern
 
 **Estado:** Implementado mediante coordinación orquestada vía REST
 
@@ -108,6 +127,7 @@
 - Service Discovery
 - Database per Service
 - Command and Query Responsibility Segregation (CQRS)
+- External Configuration (Cloud Config)
 - Saga
 
 ---
