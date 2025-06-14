@@ -102,7 +102,43 @@
 
 ---
 
-## 7. Saga Pattern
+## 7. Load Balancer Pattern
+
+**Estado:** Implementado completamente usando Spring Cloud LoadBalancer
+
+**Detalles de Implementación:**
+- **Librería:** Spring Cloud LoadBalancer (reemplazo de Ribbon)
+- **Ubicación:** Integrado en `api-gateway/`, `proxy-client/` y comunicación entre microservicios
+- **Integración:** Trabaja en conjunto con Service Discovery (Eureka) para distribución automática
+
+**Beneficios:**
+- Distribución equilibrada de carga entre instancias de servicios
+- Tolerancia a fallos mediante detección automática de instancias no disponibles
+- Escalabilidad horizontal sin intervención manual
+- Mejora del rendimiento y disponibilidad del sistema
+
+---
+
+## 8. Health Check Pattern
+
+**Estado:** Implementado completamente usando Spring Boot Actuator
+
+**Detalles de Implementación:**
+- **Librería:** Spring Boot Actuator
+- **Ubicación:** Configurado en todos los microservicios (`/actuator/health` endpoint)
+- **Características:** Monitoreo de estado de aplicación, base de datos, servicios externos, circuit breakers
+- **Integración:** Usado por Kubernetes readiness/liveness probes y Service Discovery
+
+**Beneficios:**
+- Monitoreo continuo del estado de los servicios
+- Detección temprana de problemas de salud
+- Integración con orquestadores (Kubernetes) para reinicio automático
+- Información detallada sobre dependencias y componentes
+- Facilita la observabilidad del sistema
+
+---
+
+## 9. Saga Pattern
 
 **Estado:** Implementado mediante coordinación orquestada vía REST
 
@@ -128,6 +164,8 @@
 - Database per Service
 - Command and Query Responsibility Segregation (CQRS)
 - External Configuration (Cloud Config)
+- Load Balancer
+- Health Check
 - Saga
 
 ---
