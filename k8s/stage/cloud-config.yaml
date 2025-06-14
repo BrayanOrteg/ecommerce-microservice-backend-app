@@ -36,6 +36,7 @@ spec:
       containers:
         - name: cloud-config
           image: kenbra/cloud-config-ecommerce-boot:stage
+          imagePullPolicy: Always
           ports:
             - containerPort: 9296          
           env:

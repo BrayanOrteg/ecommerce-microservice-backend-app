@@ -33,6 +33,7 @@ spec:
       containers:        
         - name: payment-service
           image: kenbra/payment-service-ecommerce-boot:dev
+          imagePullPolicy: Always
           ports:
             - containerPort: 8400          
           env:

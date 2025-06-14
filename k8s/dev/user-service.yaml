@@ -33,6 +33,7 @@ spec:
       containers:
         - name: user-service
           image: kenbra/user-service-ecommerce-boot:dev
+          imagePullPolicy: Always
           ports:
             - containerPort: 8700          
           env:

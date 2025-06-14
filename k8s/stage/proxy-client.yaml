@@ -33,6 +33,7 @@ spec:
       containers:
         - name: proxy-client
           image: kenbra/proxy-client-ecommerce-boot:stage
+          imagePullPolicy: Always
           ports:
             - containerPort: 8900          
           env:

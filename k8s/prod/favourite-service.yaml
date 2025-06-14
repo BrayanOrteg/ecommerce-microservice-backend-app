@@ -33,6 +33,7 @@ spec:
       containers:        
         - name: favourite-service
           image: kenbra/favourite-service-ecommerce-boot:prod
+          imagePullPolicy: Always
           ports:
             - containerPort: 8800          
           env:

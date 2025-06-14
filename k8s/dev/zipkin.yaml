@@ -27,6 +27,7 @@ spec:
       containers:
         - name: zipkin
           image: openzipkin/zipkin
+          imagePullPolicy: Always
           ports:
             - containerPort: 9411
           readinessProbe:
