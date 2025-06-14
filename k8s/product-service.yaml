@@ -34,7 +34,7 @@ spec:
         - name: product-service
           image: kenbra/product-service-ecommerce-boot:0.1.0
           ports:
-            - containerPort: 8500          
+            - containerPort: 8500              
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "dev"
@@ -48,6 +48,14 @@ spec:
               value: "product-service"
             - name: SPRING_RABBITMQ_HOST
               value: "rabbitmq"
+            - name: SPRING_RABBITMQ_PORT
+              value: "5672"
+            - name: SPRING_RABBITMQ_USERNAME
+              value: "guest"
+            - name: SPRING_RABBITMQ_PASSWORD
+              value: "guest"
+            - name: LOGGING_LEVEL_COM_SELIMHORRI_APP
+              value: "DEBUG"
           resources:
             requests:
               memory: "256Mi"

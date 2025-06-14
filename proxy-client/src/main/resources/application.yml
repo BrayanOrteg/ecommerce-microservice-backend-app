@@ -74,6 +74,15 @@ logging:
   level:
     org.springframework.cache: TRACE
     org.springframework.cache.interceptor: TRACE
+    org.springframework.web: DEBUG
+    io.github.resilience4j: DEBUG
+    com.selimhorri.app: DEBUG
+
+# Feature Toggle Configuration
+features:
+  cacheEnabled: ${FEATURES_CACHE_ENABLED:true}
+  retryEnabled: ${FEATURES_RETRY_ENABLED:true}
+  circuitBreakerEnabled: ${FEATURES_CIRCUIT_BREAKER_ENABLED:true}
 
 
 
