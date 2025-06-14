@@ -1,3 +1,14 @@
+## [1.0.2](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.0.1...v1.0.2) (2025-06-14)
+
+
+### Bug Fixes
+
+* add imagePullPolicy: Always ([dbae061](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/dbae06110f85c48de24e8ff4584b7abf7be31ec1))
+* include the rest of steps in prod pipeline ([d7235de](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/d7235dee00d8dddd4e29715471ee96d0dc0c074b))
+* loadBalancer in prod and stage ([5c1c62d](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/5c1c62d396e48e377457871771dd17d9c6c78f76))
+* other issues in application.yml's ([4290379](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/42903798ca9e3f2026882a6d213585288aac6ea7))
+* wrong port in favourite service application-prod.yml ([45fec81](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/45fec81d0ea059fe3b711ef280f9676f9ba17ea5))
+
 ## [1.0.1](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.0.0...v1.0.1) (2025-06-13)
 
 
