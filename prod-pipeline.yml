@@ -8,17 +8,304 @@ pool:
 
 variables:
   - group: semantic-release-vars
+  - name: azureSubscription
+    value: 'ecommerce-terraform-sc'
+  - name: dockerHubServiceConnection
+    value: 'ecommerce-docker'
+  - name: RESOURCE_GROUP
+    value: 'rg-prod'
+  - name: CLUSTER_NAME
+    value: 'aks-prod'
+  - name: K8S_MANIFEST_DIR
+    value: 'k8s/prod'
+  - name: IMAGE_TAG_SUFFIX
+    value: ':prod'
+  - name: COMPOSE_YML
+    value: 'compose.prod.yml'
 
-steps:
-  - task: NodeTool@0
-    inputs:
-      versionSpec: '20.x'
-    displayName: 'Install Node.js'
 
-  - script: |
-      npm ci
-    displayName: 'Install dependencies'
+stages:
+  - stage: Checkout
+    displayName: 'Checkout Source Code'
+    jobs:
+      - job: CheckoutJob
+        steps:
+          - checkout: self
+            displayName: 'Checkout repository'
 
-  - script: |
-      npx semantic-release
-    displayName: 'Run semantic-release'
+  - stage: BuildProject
+    displayName: 'Build Project with SonarQube Analysis'
+    jobs:
+      - job: BuildJob
+        steps:
+          - task: SonarCloudPrepare@3
+            inputs:
+              SonarQube: 'ecommerce-sonar-qube'
+              organization: 'brayan-organization'
+              scannerMode: 'other'
+              extraProperties: |
+                sonar.projectKey=brayan-organization_First-pipeline
+                sonar.projectName=First pipeline
+
+          - task: Maven@4
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'clean package'
+              options: '-DskipTests'
+              publishJUnitResults: false
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: true
+
+  - stage: RunTests
+    displayName: 'Run Unit and Integration Tests'
+    dependsOn: BuildProject
+    jobs:
+      - job: TestJob
+        steps:
+          - task: Maven@4
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'test'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              codeCoverageToolOption: 'JaCoCo'
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+
+          - task: PublishCodeCoverageResults@2
+            inputs:
+              summaryFileLocation: '**/site/jacoco/jacoco.xml'
+              reportDirectory: '**/site/jacoco'
+              codecoverageTool: 'jacoco'
+            displayName: 'Publish Code Coverage Results'
+            condition: succeededOrFailed()
+
+  - stage: PushDockerImages
+    displayName: 'Build, Test and Push Docker Images'
+    dependsOn: RunTests
+    jobs:
+      - job: DockerJob
+        steps:
+          - task: Maven@4
+            displayName: 'Build Maven Project'
+            inputs:
+              azureSubscription: 'ecommerce-terraform-sc'
+              mavenPomFile: 'pom.xml'
+              goals: 'clean package'
+              options: '-DskipTests'
+              publishJUnitResults: false
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+          - task: Docker@2
+            displayName: 'Login to Docker Hub'
+            inputs:
+              containerRegistry: $(dockerHubServiceConnection)
+              command: 'login'
+
+          - script: |
+              docker compose -f $(COMPOSE_YML) build
+            displayName: 'Build Docker Images'
+
+          - script: |
+              echo "Installing Trivy..."
+              sudo apt-get update
+              sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+              wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+              echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+              sudo apt-get update
+              sudo apt-get install -y trivy
+              trivy --version
+            displayName: 'Install Trivy'
+
+          - script: |
+              echo "Scanning Docker Images with Trivy..."
+              declare -A service_images
+              service_images["cloud-config-container"]="kenbra/cloud-config-ecommerce-boot"
+              service_images["api-gateway-container"]="kenbra/api-gateway-ecommerce-boot"
+              service_images["proxy-client-container"]="kenbra/proxy-client-ecommerce-boot"
+              service_images["order-service-container"]="kenbra/order-service-ecommerce-boot"
+              service_images["payment-service-container"]="kenbra/payment-service-ecommerce-boot"
+              service_images["product-service-container"]="kenbra/product-service-ecommerce-boot"
+              service_images["shipping-service-container"]="kenbra/shipping-service-ecommerce-boot"
+              service_images["user-service-container"]="kenbra/user-service-ecommerce-boot"
+              service_images["favourite-service-container"]="kenbra/favourite-service-ecommerce-boot"
+              for service_name in "${!service_images[@]}"; do
+                  image_name="${service_images[$service_name]}$(IMAGE_TAG_SUFFIX)"
+                  echo "--- Scanning image: $image_name ---"
+                  trivy image "$image_name" || echo "Trivy scan failed for $image_name but continuing pipeline..."
+              done
+            displayName: 'Scan Docker Images with Trivy'
+
+          - script: |
+              docker compose -f $(COMPOSE_YML) push
+            displayName: 'Push Docker Images'
+
+          - task: Docker@2
+            displayName: 'Logout from Docker Hub'
+            inputs:
+              containerRegistry: $(dockerHubServiceConnection)
+              command: 'logout'
+            condition: succeededOrFailed()
+
+  - stage: DeployToAKS
+    displayName: 'Deploy to AKS'
+    dependsOn: PushDockerImages
+    jobs:
+      - job: DeployJob
+        steps:
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: 'az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --overwrite-existing'
+            displayName: 'Get AKS Credentials'
+
+          - task: KubernetesManifest@1
+            displayName: 'Deploy Zipkin'
+            inputs:
+              action: 'deploy'
+              connectionType: 'azureResourceManager'
+              azureSubscriptionConnection: $(azureSubscription)
+              azureResourceGroup: $(RESOURCE_GROUP)
+              kubernetesCluster: $(CLUSTER_NAME)
+              namespace: 'default'
+              manifests: '$(K8S_MANIFEST_DIR)/zipkin.yaml'
+
+          - script: |
+              echo "Waiting for Zipkin to be healthy..."
+              kubectl rollout status deployment/zipkin --timeout=300s --namespace default
+            displayName: 'Wait for Zipkin'
+
+          - task: KubernetesManifest@1
+            displayName: 'Deploy Service Discovery'
+            inputs:
+              action: 'deploy'
+              connectionType: 'azureResourceManager'
+              azureSubscriptionConnection: $(azureSubscription)
+              azureResourceGroup: $(RESOURCE_GROUP)
+              kubernetesCluster: $(CLUSTER_NAME)
+              namespace: 'default'
+              manifests: '$(K8S_MANIFEST_DIR)/service-discovery.yaml'
+
+          - script: |
+              echo "Waiting for Service Discovery to be healthy..."
+              kubectl rollout status deployment/service-discovery --timeout=300s --namespace default
+            displayName: 'Wait for Service Discovery'
+
+          - task: KubernetesManifest@1
+            displayName: 'Deploy Cloud Config'
+            inputs:
+              action: 'deploy'
+              connectionType: 'azureResourceManager'
+              azureSubscriptionConnection: $(azureSubscription)
+              azureResourceGroup: $(RESOURCE_GROUP)
+              kubernetesCluster: $(CLUSTER_NAME)
+              namespace: 'default'
+              manifests: '$(K8S_MANIFEST_DIR)/cloud-config.yaml'
+
+          - script: |
+              echo "Waiting for Cloud Config to be healthy..."
+              kubectl rollout status deployment/cloud-config --timeout=300s --namespace default
+            displayName: 'Wait for Cloud Config'
+
+          - task: KubernetesManifest@1
+            displayName: 'Deploy Every Service'
+            inputs:
+              action: 'deploy'
+              connectionType: 'azureResourceManager'
+              azureSubscriptionConnection: $(azureSubscription)
+              azureResourceGroup: $(RESOURCE_GROUP)
+              kubernetesCluster: $(CLUSTER_NAME)
+              namespace: 'default'
+              manifests: |
+                $(K8S_MANIFEST_DIR)/api-gateway.yaml
+                $(K8S_MANIFEST_DIR)/order-service.yaml
+                $(K8S_MANIFEST_DIR)/payment-service.yaml
+                $(K8S_MANIFEST_DIR)/product-service.yaml
+                $(K8S_MANIFEST_DIR)/shipping-service.yaml
+                $(K8S_MANIFEST_DIR)/user-service.yaml
+                $(K8S_MANIFEST_DIR)/favourite-service.yaml
+                $(K8S_MANIFEST_DIR)/proxy-client.yaml
+
+          - script: |
+              echo "Waiting for all microservices to be healthy..."
+              declare -a deployments=(
+                "api-gateway"
+                "order-service"
+                "payment-service"
+                "product-service"
+                "shipping-service"
+                "user-service"
+                "favourite-service"
+                "proxy-client"
+              )
+
+              for deployment in "${deployments[@]}"; do
+                echo "--- Waiting for deployment $deployment ---"
+                kubectl rollout status deployment/$deployment --timeout=300s --namespace default || {
+                  echo "##vso[task.logissue type=error;]Deployment $deployment did not become healthy within the timeout."
+                  exit 1
+                }
+                echo "Deployment $deployment is healthy."
+              done
+              echo "All microservices deployments are healthy."
+            displayName: 'Wait for all Microservices'
+
+          - bash: |
+              echo "Attempting to get API Gateway Load Balancer IP..."
+              API_GATEWAY_IP=""
+              RETRY_COUNT=0
+              MAX_RETRIES=12 # Retry for 12 * 10s = 120 seconds
+              RETRY_INTERVAL=10
+
+              while [ -z "$API_GATEWAY_IP" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                API_GATEWAY_IP=$(kubectl get service api-gateway --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+                if [ -z "$API_GATEWAY_IP" ]; then
+                  RETRY_COUNT=$((RETRY_COUNT + 1))
+                  echo "API Gateway IP not available yet. Retry $RETRY_COUNT/$MAX_RETRIES. Waiting $RETRY_INTERVAL seconds..."
+                  sleep $RETRY_INTERVAL
+                else
+                  echo "API Gateway IP found: $API_GATEWAY_IP"
+                  break
+                fi
+              done
+
+              if [ -z "$API_GATEWAY_IP" ]; then
+                echo "##vso[task.logissue type=error;]Failed to get API Gateway Load Balancer IP after $MAX_RETRIES retries."
+                kubectl get service api-gateway --namespace default -o yaml # Print service details for debugging
+                exit 1
+              fi
+              
+              echo "Successfully retrieved API_GATEWAY_IP: $API_GATEWAY_IP"
+              echo "http://$API_GATEWAY_IP:8080"
+            name: SetE2EVar
+            displayName: 'Extract and Set API Gateway IP'
+  - stage: SemanticRelease
+    displayName: 'Semantic Release Stage'
+    jobs:
+      - job: SemanticReleaseJob
+        displayName: 'Install and Run Semantic Release'
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '20.x'
+            displayName: 'Install Node.js'
+
+          - script: |
+              npm ci
+            displayName: 'Install dependencies'
+
+          - script: |
+              npx semantic-release
+            displayName: 'Run semantic-release'
+
