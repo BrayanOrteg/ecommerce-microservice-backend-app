@@ -170,16 +170,17 @@ stages:
               inlineScript: 'az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --overwrite-existing'
             displayName: 'Get AKS Credentials'
 
-          - task: KubernetesManifest@1
-            displayName: 'Deploy Zipkin'
+          - task: DownloadSecureFile@1
+            name: grafanaDeployScriptFile
+            displayName: 'Download .grafana script'
             inputs:
-              action: 'deploy'
-              connectionType: 'azureResourceManager'
-              azureSubscriptionConnection: $(azureSubscription)
-              azureResourceGroup: $(RESOURCE_GROUP)
-              kubernetesCluster: $(CLUSTER_NAME)
-              namespace: 'default'
-              manifests: '$(K8S_MANIFEST_DIR)/zipkin.yaml'
+              secureFile: '.grafana'
+          - script: |
+              chmod +x $(grafanaDeployScriptFile.secureFilePath)
+          - task: Bash@3
+            displayName: 'Execute .grafana script'
+            inputs:
+              filePath: $(grafanaDeployScriptFile.secureFilePath)
 
           - task: KubernetesManifest@1
             displayName: 'Deploy Service Discovery'
@@ -251,17 +252,6 @@ stages:
               echo "http://$API_GATEWAY_IP:8080"
             name: SetE2EVar
             displayName: 'Extract and Set API Gateway IP'
-          - task: DownloadSecureFile@1
-            name: grafanaDeployScriptFile
-            displayName: 'Download .grafana script'
-            inputs:
-              secureFile: '.grafana'
-          - script: |
-              chmod +x $(grafanaDeployScriptFile.secureFilePath)
-          - task: Bash@3
-            displayName: 'Execute .grafana script'
-            inputs:
-              filePath: $(grafanaDeployScriptFile.secureFilePath)
 
   - stage: SemanticRelease
     displayName: 'Semantic Release Stage'
