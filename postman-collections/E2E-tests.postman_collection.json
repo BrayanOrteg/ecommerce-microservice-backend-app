@@ -1098,10 +1098,6 @@
 			"value": "1"
 		},
 		{
-			"key": "base_url",
-			"value": "http://api-gateway:8080"
-		},
-		{
 			"key": "id_user",
 			"value": "5",
 			"type": "string"

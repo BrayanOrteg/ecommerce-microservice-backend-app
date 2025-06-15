@@ -1,24 +1,16 @@
-trigger: none
-pr: none
-
-parameters:
-  - name: profile
-    displayName: 'Elige un perfil (prod / dev / stage)'
-    type: string
-    default: dev
-    values:
-      - dev
+trigger:
+  branches:
+    include:
       - stage
-      - prod
 
 variables:
   azureSubscription: 'ecommerce-terraform-sc'
   dockerHubServiceConnection: 'ecommerce-docker'
-  RESOURCE_GROUP: 'rg-${{ parameters.profile }}'
-  CLUSTER_NAME: 'aks-${{ parameters.profile }}'
-  K8S_MANIFEST_DIR: 'k8s/${{ parameters.profile }}'
-  IMAGE_TAG_SUFFIX: ':${{ parameters.profile }}'
-  COMPOSE_YML: 'compose.${{ parameters.profile }}.yml'
+  RESOURCE_GROUP: 'rg-stage'
+  CLUSTER_NAME: 'aks-stage'
+  K8S_MANIFEST_DIR: 'k8s/stage'
+  IMAGE_TAG_SUFFIX: ':stage'
+  COMPOSE_YML: 'compose.stage.yml'
   E2E_BASE_URL: ''
   LOCUST_USERS: '10'
   LOCUST_SPAWN_RATE: '1'
@@ -217,6 +209,7 @@ stages:
               namespace: 'default'
               manifests: |
                 $(K8S_MANIFEST_DIR)/api-gateway.yaml
+                $(K8S_MANIFEST_DIR)/rabbitmq.yaml
                 $(K8S_MANIFEST_DIR)/order-service.yaml
                 $(K8S_MANIFEST_DIR)/payment-service.yaml
                 $(K8S_MANIFEST_DIR)/product-service.yaml
@@ -336,31 +329,6 @@ stages:
             displayName: 'Publish Newman E2E Report'
             condition: succeededOrFailed()
 
-  - stage: SonnarQubeAndBuild
-    displayName: 'Build Project'
-    jobs:
-      - job: SonnarAndBuildJob
-        steps:
-          - task: SonarCloudPrepare@3
-            inputs:
-              SonarQube: 'ecommerce-sonar-qube'
-              organization: 'brayan-organization'
-              scannerMode: 'other'
-              extraProperties: |
-                sonar.projectKey=brayan-organization_First-pipeline
-                sonar.projectName=First pipeline
-          - task: Maven@4
-            inputs:
-              azureSubscription: 'ecommerce-terraform-sc'
-              mavenPomFile: 'pom.xml'
-              goals: 'clean package'
-              options: '-DskipTests'
-              publishJUnitResults: false
-              javaHomeOption: 'JDKVersion'
-              mavenVersionOption: 'Default'
-              mavenAuthenticateFeed: false
-              effectivePomSkip: false
-              sonarQubeRunAnalysis: true
 
   - stage: Locust
     displayName: 'Run Locust'

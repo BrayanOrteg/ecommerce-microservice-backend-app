@@ -1,24 +1,25 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: cloud-config
+  name: api-gateway
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
-    app: cloud-config
+    app: api-gateway
   ports:
-    - port: 9296
-      targetPort: 9296
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cloud-config
+  name: api-gateway
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cloud-config
+      app: api-gateway
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -27,44 +28,38 @@ spec:
   template:
     metadata:
       labels:
-        app: cloud-config
+        app: api-gateway
     spec:
       initContainers:
+        - name: wait-for-cloud-config
+          image: busybox:1.28
+          command: ['sh', '-c', 'until wget -T 5 -q -O- http://cloud-config:9296/actuator/health; do echo "Waiting for cloud-config"; sleep 10; done;']
         - name: wait-for-service-discovery
           image: busybox:1.28
           command: ['sh', '-c', 'until wget -T 5 -q -O- http://service-discovery:8761/actuator/health; do echo "Waiting for service-discovery"; sleep 10; done;']
-        - name: wait-for-zipkin
-          image: busybox:1.28
-          command: ['sh', '-c', 'until wget -T 5 -q -O- http://zipkin:9411/health; do echo "Waiting for zipkin"; sleep 10; done;']
-        - name: wait-for-rabbitmq
-          image: busybox:1.28
-          command: ['sh', '-c', 'until nc -z rabbitmq 5672; do echo "Waiting for rabbitmq"; sleep 10; done;']
       containers:
-        - name: cloud-config
-          image: kenbra/cloud-config-ecommerce-boot:0.1.0
+        - name: api-gateway
+          image: kenbra/api-gateway-ecommerce-boot:dev
+          imagePullPolicy: Always
           ports:
-            - containerPort: 9296              
+            - containerPort: 8080            
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "dev"
             - name: SPRING_ZIPKIN_BASE_URL
               value: "http://zipkin:9411"
+            - name: SPRING_CONFIG_IMPORT
+              value: "optional:configserver:http://cloud-config:9296"
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://service-discovery:8761/eureka/"
             - name: EUREKA_INSTANCE
-              value: "cloud-config"
-            - name: SPRING_RABBITMQ_HOST
-              value: "rabbitmq"
-            - name: SPRING_RABBITMQ_PORT
-              value: "5672"
-            - name: SPRING_RABBITMQ_USERNAME
-              value: "guest"
-            - name: SPRING_RABBITMQ_PASSWORD
-              value: "guest"
+              value: "api-gateway"
+            - name: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_GATEWAY
+              value: DEBUG
           readinessProbe:
             httpGet:
               path: /actuator/health
-              port: 9296
+              port: 8080
             initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 5
@@ -73,7 +68,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /actuator/health
-              port: 9296
+              port: 8080
             initialDelaySeconds: 90
             periodSeconds: 30
             timeoutSeconds: 5

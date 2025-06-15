@@ -32,7 +32,8 @@ spec:
     spec:
       containers:
         - name: product-service
-          image: kenbra/product-service-ecommerce-boot:0.1.0
+          image: kenbra/product-service-ecommerce-boot:dev
+          imagePullPolicy: Always
           ports:
             - containerPort: 8500              
           env:
@@ -55,14 +56,7 @@ spec:
             - name: SPRING_RABBITMQ_PASSWORD
               value: "guest"
             - name: LOGGING_LEVEL_COM_SELIMHORRI_APP
-              value: "DEBUG"
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "200m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"          
+              value: "DEBUG"          
           readinessProbe:
             httpGet:
               path: /product-service/actuator/health

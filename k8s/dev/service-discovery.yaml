@@ -32,7 +32,8 @@ spec:
     spec:
       containers:
         - name: service-discovery
-          image: kenbra/service-discovery-ecommerce-boot:0.1.0
+          image: kenbra/service-discovery-ecommerce-boot:dev
+          imagePullPolicy: Always
           ports:
             - containerPort: 8761          
           env:

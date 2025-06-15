@@ -4,17 +4,14 @@ services:
     image: openzipkin/zipkin
     ports:
       - 9411:9411
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
-      - EUREKA_INSTANCE_HOSTNAME=zipkin-container
   service-discovery-container:
     build:
       context: ./service-discovery
-    image: kenbra/service-discovery-ecommerce-boot:0.1.0
+    image: kenbra/service-discovery-ecommerce-boot:prod
     ports:
       - 8761:8761
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
@@ -24,15 +21,15 @@ services:
       start_period: 120s
     depends_on:
       zipkin-container:
-        condition: service_started
+        condition: service_started  
   cloud-config-container:
     build:
       context: ./cloud-config
-    image: kenbra/cloud-config-ecommerce-boot:0.1.0
+    image: kenbra/cloud-config-ecommerce-boot:prod
     ports:
-      - "9296:9296"
+      - 9296:9296
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
       - EUREKA_INSTANCE_HOSTNAME=cloud-config-container
@@ -49,15 +46,15 @@ services:
       zipkin-container:
         condition: service_started
       rabbitmq:
-        condition: service_started 
+        condition: service_started
   api-gateway-container:
     build:
       context: ./api-gateway
-    image: kenbra/api-gateway-ecommerce-boot:0.1.0
+    image: kenbra/api-gateway-ecommerce-boot:prod
     ports:
       - 8080:8080
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
@@ -72,11 +69,11 @@ services:
   proxy-client-container:
     build:
       context: ./proxy-client
-    image: kenbra/proxy-client-ecommerce-boot:0.1.0
+    image: kenbra/proxy-client-ecommerce-boot:prod
     ports:
       - 8900:8900
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
@@ -91,11 +88,11 @@ services:
   order-service-container:
     build:
       context: ./order-service
-    image: kenbra/order-service-ecommerce-boot:0.1.0
+    image: kenbra/order-service-ecommerce-boot:prod
     ports:
       - 8300:8300
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
@@ -110,11 +107,11 @@ services:
   payment-service-container:
     build:
       context: ./payment-service
-    image: kenbra/payment-service-ecommerce-boot:0.1.0
+    image: kenbra/payment-service-ecommerce-boot:prod
     ports:
       - 8400:8400
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
@@ -125,15 +122,15 @@ services:
       service-discovery-container:
         condition: service_healthy
       zipkin-container:
-        condition: service_started
+        condition: service_started  
   product-service-container:
     build:
       context: ./product-service
-    image: kenbra/product-service-ecommerce-boot:0.1.0
+    image: kenbra/product-service-ecommerce-boot:prod
     ports:
-      - "8500:8500"
+      - 8500:8500
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
@@ -151,11 +148,11 @@ services:
   shipping-service-container:
     build:
       context: ./shipping-service
-    image: kenbra/shipping-service-ecommerce-boot:0.1.0
+    image: kenbra/shipping-service-ecommerce-boot:prod
     ports:
       - 8600:8600
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
@@ -170,11 +167,11 @@ services:
   user-service-container:
     build:
       context: ./user-service
-    image: kenbra/user-service-ecommerce-boot:0.1.0
+    image: kenbra/user-service-ecommerce-boot:prod
     ports:
       - 8700:8700
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
@@ -189,11 +186,11 @@ services:
   favourite-service-container:
     build:
       context: ./favourite-service
-    image: kenbra/favourite-service-ecommerce-boot:0.1.0
+    image: kenbra/favourite-service-ecommerce-boot:prod
     ports:
       - 8800:8800
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
       - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
