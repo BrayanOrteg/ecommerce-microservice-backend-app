@@ -25,7 +25,7 @@ function Test-PodReady {
     param (
         [string]$podName
     )
-      $podStatus = kubectl get pods -n jenkins | Select-String -Pattern $podName
+      $podStatus = kubectl get pods | Select-String -Pattern $podName
     return ($podStatus -match "1/1") -and ($podStatus -match "Running")
 }
 
@@ -48,7 +48,7 @@ foreach ($service in $microservices) {
     Write-Host "Reiniciando $service para asegurar registro en Eureka..." -ForegroundColor Yellow
     
     # Reiniciar el deployment
-    kubectl rollout restart deployment $service -n jenkins
+    kubectl rollout restart deployment $service
     
     # Esperar un momento entre reinicios para no sobrecargar el sistema
     Start-Sleep -Seconds 2
