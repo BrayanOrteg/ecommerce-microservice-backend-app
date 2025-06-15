@@ -47,6 +47,8 @@ spec:
               value: "http://service-discovery:8761/eureka/"
             - name: EUREKA_INSTANCE
               value: "order-service"
+            - name: LOGGING_LEVEL_IO_GITHUB_RESILIENCE4J
+              value: DEBUG
           readinessProbe:
             httpGet:
               path: /order-service/actuator/health

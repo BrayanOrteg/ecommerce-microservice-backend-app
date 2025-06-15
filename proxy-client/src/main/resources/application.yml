@@ -1,4 +1,3 @@
-
 server:
   servlet:
     context-path: /app
@@ -28,6 +27,41 @@ resilience4j:
         wait-duration-in-open-state: 5s
         sliding-window-type: COUNT_BASED
 
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 10s
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - feign.RetryableException
+          - org.springframework.web.client.ResourceAccessException
+          - feign.FeignException$ServiceUnavailable 
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException.BadRequest
+          - org.springframework.web.client.HttpClientErrorException.NotFound
+          - org.springframework.web.client.HttpClientErrorException.Conflict
+          - org.springframework.web.client.HttpClientErrorException.Unauthorized
+          - feign.FeignException.BadRequest
+          - feign.FeignException.NotFound
+          - feign.FeignException.Conflict
+          - feign.FeignException.Unauthorized
+          - feign.FeignException.Forbidden
+    instances:
+      userService:
+        base-config: default
+      productService:
+        base-config: default
+      orderService:
+        base-config: default
+      paymentService:
+        base-config: default
+      shippingService:
+        base-config: default
+      favouriteService:
+        base-config: default
+
 management:
   health:
     circuitbreakers:
@@ -35,6 +69,20 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    org.springframework.cache: TRACE
+    org.springframework.cache.interceptor: TRACE
+    org.springframework.web: DEBUG
+    io.github.resilience4j: DEBUG
+    com.selimhorri.app: DEBUG
+
+# Feature Toggle Configuration
+features:
+  cacheEnabled: ${FEATURES_CACHE_ENABLED:true}
+  retryEnabled: ${FEATURES_RETRY_ENABLED:true}
+  circuitBreakerEnabled: ${FEATURES_CIRCUIT_BREAKER_ENABLED:true}
 
 
 

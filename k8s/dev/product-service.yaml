@@ -35,7 +35,7 @@ spec:
           image: kenbra/product-service-ecommerce-boot:dev
           imagePullPolicy: Always
           ports:
-            - containerPort: 8500          
+            - containerPort: 8500              
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "dev"
@@ -47,6 +47,16 @@ spec:
               value: "http://service-discovery:8761/eureka/"
             - name: EUREKA_INSTANCE
               value: "product-service"
+            - name: SPRING_RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: SPRING_RABBITMQ_PORT
+              value: "5672"
+            - name: SPRING_RABBITMQ_USERNAME
+              value: "guest"
+            - name: SPRING_RABBITMQ_PASSWORD
+              value: "guest"
+            - name: LOGGING_LEVEL_COM_SELIMHORRI_APP
+              value: "DEBUG"          
           readinessProbe:
             httpGet:
               path: /product-service/actuator/health

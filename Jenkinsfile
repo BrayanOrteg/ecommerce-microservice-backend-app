@@ -216,6 +216,12 @@ pipeline {
                 echo "Esperando a que Zipkin esté disponible..."
                 sleep 30 # Dar tiempo para que se inicie
                 
+                # Desplegar RabbitMQ
+                echo "Desplegando RabbitMQ..."
+                kubectl apply -f k8s/rabbitmq.yaml
+                echo "Esperando a que RabbitMQ esté disponible..."
+                sleep 30 # Dar tiempo para que se inicie
+                
                 # Desplegar Service Discovery (Eureka)
                 echo "Desplegando Service Discovery (Eureka)..."
                 kubectl apply -f k8s/service-discovery.yaml
