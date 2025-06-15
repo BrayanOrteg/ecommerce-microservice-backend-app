@@ -44,9 +44,19 @@ spec:
             - name: SPRING_CONFIG_IMPORT
               value: "optional:configserver:http://cloud-config:9296"
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-              value: "http://service-discovery:8761/eureka/"
+              value: "http://service-discovery:8761/eureka/"            
             - name: EUREKA_INSTANCE
               value: "product-service"
+            - name: SPRING_RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: SPRING_RABBITMQ_PORT
+              value: "5672"
+            - name: SPRING_RABBITMQ_USERNAME
+              value: "guest"
+            - name: SPRING_RABBITMQ_PASSWORD
+              value: "guest"
+            - name: LOGGING_LEVEL_COM_SELIMHORRI_APP
+              value: "DEBUG"
           readinessProbe:
             httpGet:
               path: /product-service/actuator/health

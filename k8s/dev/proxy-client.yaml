@@ -35,7 +35,7 @@ spec:
           image: kenbra/proxy-client-ecommerce-boot:dev
           imagePullPolicy: Always
           ports:
-            - containerPort: 8900          
+            - containerPort: 8900            
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "dev"
@@ -47,3 +47,15 @@ spec:
               value: "http://service-discovery:8761/eureka/"
             - name: EUREKA_INSTANCE
               value: "proxy-client"
+            - name: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CACHE
+              value: TRACE
+            - name: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CACHE_INTERCEPTOR
+              value: TRACE            
+            - name: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB
+              value: DEBUG
+            - name: LOGGING_LEVEL_IO_GITHUB_RESILIENCE4J
+              value: DEBUG
+            - name: FEATURES_CACHE_ENABLED
+              value: "true"
+            - name: FEATURES_RETRY_ENABLED
+              value: "true"

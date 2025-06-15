@@ -28,11 +28,14 @@ spec:
     metadata:
       labels:
         app: cloud-config
-    spec:
+    spec:      
       initContainers:
         - name: wait-for-service-discovery
           image: busybox:1.28
-          command: ['sh', '-c', 'until wget -T 5 -q -O- http://service-discovery:8761/actuator/health; do echo "Waiting for service-discovery"; sleep 10; done;']      
+          command: ['sh', '-c', 'until wget -T 5 -q -O- http://service-discovery:8761/actuator/health; do echo "Waiting for service-discovery"; sleep 10; done;']
+        - name: wait-for-rabbitmq
+          image: busybox:1.28
+          command: ['sh', '-c', 'until nc -z rabbitmq 5672; do echo "Waiting for rabbitmq"; sleep 10; done;']
       containers:
         - name: cloud-config
           image: kenbra/cloud-config-ecommerce-boot:stage
@@ -45,9 +48,17 @@ spec:
             - name: SPRING_ZIPKIN_BASE_URL
               value: "http://zipkin:9411"
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-              value: "http://service-discovery:8761/eureka/"
+              value: "http://service-discovery:8761/eureka/"            
             - name: EUREKA_INSTANCE
               value: "cloud-config"
+            - name: SPRING_RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: SPRING_RABBITMQ_PORT
+              value: "5672"
+            - name: SPRING_RABBITMQ_USERNAME
+              value: "guest"
+            - name: SPRING_RABBITMQ_PASSWORD
+              value: "guest"
           readinessProbe:
             httpGet:
               path: /actuator/health

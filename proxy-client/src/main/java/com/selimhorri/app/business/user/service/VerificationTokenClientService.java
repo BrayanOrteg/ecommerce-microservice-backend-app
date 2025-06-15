@@ -15,32 +15,38 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.selimhorri.app.business.user.model.VerificationTokenDto;
 import com.selimhorri.app.business.user.model.response.VerificationUserTokenServiceCollectionDtoResponse;
+import io.github.resilience4j.retry.annotation.Retry;
 
 @FeignClient(name = "USER-SERVICE", contextId = "verificationTokenClientService", path = "/user-service/api/verificationTokens", decode404 = true)
 public interface VerificationTokenClientService {
 	
 	@GetMapping
+	@Retry(name = "userService")
 	ResponseEntity<VerificationUserTokenServiceCollectionDtoResponse> findAll();
 	
 	@GetMapping("/{verificationTokenId}")
+	@Retry(name = "userService")
 	ResponseEntity<VerificationTokenDto> findById(
 			@PathVariable("verificationTokenId") 
 			@NotBlank(message = "*Input must not blank!**") 
 			@Valid final String verificationTokenId);
 	
 	@PostMapping
+	@Retry(name = "userService")
 	ResponseEntity<VerificationTokenDto> save(
 			@RequestBody 
 			@NotNull(message = "*Input must not NULL!**") 
 			@Valid final VerificationTokenDto verificationTokenDto);
 	
 	@PutMapping
+	@Retry(name = "userService")
 	ResponseEntity<VerificationTokenDto> update(
 			@RequestBody 
 			@NotNull(message = "*Input must not NULL!**") 
 			@Valid final VerificationTokenDto verificationTokenDto);
 	
 	@PutMapping("/{verificationTokenId}")
+	@Retry(name = "userService")
 	ResponseEntity<VerificationTokenDto> update(
 			@PathVariable("verificationTokenId") 
 			@NotBlank(message = "*Input must not blank!**") final String verificationTokenId, 
@@ -49,6 +55,7 @@ public interface VerificationTokenClientService {
 			@Valid final VerificationTokenDto verificationTokenDto);
 	
 	@DeleteMapping("/{verificationTokenId}")
+	@Retry(name = "userService")
 	ResponseEntity<Boolean> deleteById(@PathVariable("verificationTokenId") @NotBlank(message = "*Input must not blank!**") @Valid final String verificationTokenId);
 	
 }
