@@ -336,6 +336,31 @@ stages:
             displayName: 'Publish Newman E2E Report'
             condition: succeededOrFailed()
 
+  - stage: SonnarQubeAndBuild
+    displayName: 'Build Project'
+    jobs:
+      - job: SonnarAndBuildJob
+        steps:
+          - task: SonarCloudPrepare@3
+            inputs:
+              SonarQube: 'ecommerce-sonar-qube'
+              organization: 'brayan-organization'
+              scannerMode: 'other'
+              extraProperties: |
+                sonar.projectKey=brayan-organization_First-pipeline
+                sonar.projectName=First pipeline
+          - task: Maven@4
+            inputs:
+              azureSubscription: 'ecommerce-terraform-sc'
+              mavenPomFile: 'pom.xml'
+              goals: 'clean package'
+              options: '-DskipTests'
+              publishJUnitResults: false
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: true
 
   - stage: Locust
     displayName: 'Run Locust'

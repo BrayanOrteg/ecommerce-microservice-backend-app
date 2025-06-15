@@ -42,7 +42,7 @@ spec:
           image: kenbra/api-gateway-ecommerce-boot:dev
           imagePullPolicy: Always
           ports:
-            - containerPort: 8080          
+            - containerPort: 8080            
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "dev"
@@ -54,6 +54,8 @@ spec:
               value: "http://service-discovery:8761/eureka/"
             - name: EUREKA_INSTANCE
               value: "api-gateway"
+            - name: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_GATEWAY
+              value: DEBUG
           readinessProbe:
             httpGet:
               path: /actuator/health

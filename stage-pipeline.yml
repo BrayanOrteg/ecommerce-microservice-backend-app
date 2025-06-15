@@ -190,6 +190,17 @@ stages:
               manifests: '$(K8S_MANIFEST_DIR)/service-discovery.yaml'
 
           - task: KubernetesManifest@1
+            displayName: 'Deploy RabbitMQ'
+            inputs:
+              action: 'deploy'
+              connectionType: 'azureResourceManager'
+              azureSubscriptionConnection: $(azureSubscription)
+              azureResourceGroup: $(RESOURCE_GROUP)
+              kubernetesCluster: $(CLUSTER_NAME)
+              namespace: 'default'
+              manifests: '$(K8S_MANIFEST_DIR)/rabbitmq.yaml'
+
+          - task: KubernetesManifest@1
             displayName: 'Deploy Cloud Config'
             inputs:
               action: 'deploy'
@@ -211,6 +222,7 @@ stages:
               namespace: 'default'
               manifests: |
                 $(K8S_MANIFEST_DIR)/api-gateway.yaml
+                $(K8S_MANIFEST_DIR)/rabbitmq.yaml
                 $(K8S_MANIFEST_DIR)/order-service.yaml
                 $(K8S_MANIFEST_DIR)/payment-service.yaml
                 $(K8S_MANIFEST_DIR)/product-service.yaml

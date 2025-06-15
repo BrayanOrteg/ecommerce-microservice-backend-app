@@ -1,0 +1,14 @@
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  application:
+    name: PRODUCT-SERVICE
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+    bootstrap:
+      enabled: false
