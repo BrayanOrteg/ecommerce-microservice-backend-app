@@ -3,6 +3,8 @@ trigger:
     include:
       - dev
 
+pr: none
+
 variables:
   azureSubscription: 'ecommerce-terraform-sc'
   dockerHubServiceConnection: 'ecommerce-docker'
