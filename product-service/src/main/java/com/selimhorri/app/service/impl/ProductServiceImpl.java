@@ -5,6 +5,8 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 
 import com.selimhorri.app.dto.ProductDto;
@@ -20,13 +22,25 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 @Slf4j
 @RequiredArgsConstructor
+@RefreshScope
 public class ProductServiceImpl implements ProductService {
 	
 	private final ProductRepository productRepository;
+
+	@Value("${features.newSearchAlgorithm.enabled:false}")
+	private boolean newSearchAlgorithmEnabled;
 	
 	@Override
 	public List<ProductDto> findAll() {
 		log.info("*** ProductDto List, service; fetch all products *");
+
+		if (newSearchAlgorithmEnabled) {
+			log.info("Using NEW search algorithm to fetch all products!");
+			
+		} else {
+			log.info("Using OLD search algorithm to fetch all products.");
+		}
+
 		return this.productRepository.findAll()
 				.stream()
 					.map(ProductMappingHelper::map)

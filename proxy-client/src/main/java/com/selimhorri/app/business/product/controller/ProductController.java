@@ -15,6 +15,8 @@ import com.selimhorri.app.business.product.model.response.ProductProductServiceC
 import com.selimhorri.app.business.product.service.ProductClientService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 @RestController
 @RequestMapping("/api/products")
@@ -23,33 +25,40 @@ public class ProductController {
 	
 	private final ProductClientService productClientService;
 	
+	@Cacheable(value = "products")
 	@GetMapping
 	public ResponseEntity<ProductProductServiceCollectionDtoResponse> findAll() {
 		return ResponseEntity.ok(this.productClientService.findAll().getBody());
 	}
 	
+	@Cacheable(value = "productById", key = "#productId")
 	@GetMapping("/{productId}")
 	public ResponseEntity<ProductDto> findById(@PathVariable("productId") final String productId) {
 		return ResponseEntity.ok(this.productClientService.findById(productId).getBody());
 	}
 		@PostMapping
+	@CacheEvict(value = {"products", "productById"}, allEntries = true)
 	public ResponseEntity<ProductDto> save(@RequestBody final ProductDto productDto) {
 		ResponseEntity<ProductDto> response = this.productClientService.save(productDto);
 		return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
 	}
 	
 	@PutMapping
+	@CacheEvict(value = {"products", "productById"}, allEntries = true)
 	public ResponseEntity<ProductDto> update(@RequestBody final ProductDto productDto) {
 		return ResponseEntity.ok(this.productClientService.update(productDto).getBody());
 	}
 	
 	@PutMapping("/{productId}")
+	@CacheEvict(value = {"products", "productById"}, allEntries = true)
 	public ResponseEntity<ProductDto> update(@PathVariable("productId") final String productId, 
 			@RequestBody final ProductDto productDto) {
 		return ResponseEntity.ok(this.productClientService.update(productId, productDto).getBody());
-	}	@DeleteMapping("/{productId}")
+	}	
+	
+	@DeleteMapping("/{productId}")
+	@CacheEvict(value = {"products", "productById"}, allEntries = true)
 	public ResponseEntity<Void> deleteById(@PathVariable("productId") final String productId) {
-		// Simplemente reenviar el status code 204 No Content del servicio
 		this.productClientService.deleteById(productId);
 		return ResponseEntity.noContent().build();
 	}
