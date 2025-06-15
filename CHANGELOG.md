@@ -1,3 +1,15 @@
+# [1.1.0](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.0.2...v1.1.0) (2025-06-15)
+
+
+### Bug Fixes
+
+* ignore .grafana file ([355bfc8](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/355bfc8006e54b3f694b2afc27c335ed91b23540))
+
+
+### Features
+
+* include grafana for observability and loki for logs ([00ffe75](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/00ffe75a4ce1a5f0457c90ca7a1e9e14ed34f9ce))
+
 ## [1.0.2](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.0.1...v1.0.2) (2025-06-14)
 
 
