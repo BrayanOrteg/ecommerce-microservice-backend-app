@@ -1,11 +1,12 @@
 {
 	"info": {
-		"_postman_id": "e02a92a2-c22b-4eea-a92a-5a5ed454db0b",
+		"_postman_id": "c69c3339-1ac1-4bdc-82f2-362c510c9d64",
 		"name": "E2E-tests",
 		"description": "Merged collection containing E2E and E2E-tests collections for comprehensive end-to-end testing of the ecommerce microservice backend application.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "37433479"
-	},	"item": [
+	},
+	"item": [
 		{
 			"name": "Create an user, credential, category and multiple products",
 			"item": [
@@ -52,12 +53,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}user-service/api/users",
-							"protocol": "http",
+							"raw": "{{base_url}}/user-service/api/users",
 							"host": [
-								"{{base_url}}user-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"user-service",
 								"api",
 								"users"
 							]
@@ -127,12 +128,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}user-service/api/credentials",
-							"protocol": "http",
+							"raw": "{{base_url}}/user-service/api/credentials",
 							"host": [
-								"{{base_url}}user-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"user-service",
 								"api",
 								"credentials"
 							]
@@ -173,12 +174,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}product-service/api/categories",
-							"protocol": "http",
+							"raw": "{{base_url}}/product-service/api/categories",
 							"host": [
-								"{{base_url}}product-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"product-service",
 								"api",
 								"categories"
 							]
@@ -232,12 +233,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}product-service/api/products",
-							"protocol": "http",
+							"raw": "{{base_url}}/product-service/api/products",
 							"host": [
-								"{{base_url}}product-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"product-service",
 								"api",
 								"products"
 							]
@@ -281,12 +282,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}product-service/api/products",
-							"protocol": "http",
+							"raw": "{{base_url}}/product-service/api/products",
 							"host": [
-								"{{base_url}}product-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"product-service",
 								"api",
 								"products"
 							]
@@ -330,12 +331,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}product-service/api/products",
-							"protocol": "http",
+							"raw": "{{base_url}}/product-service/api/products",
 							"host": [
-								"{{base_url}}product-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"product-service",
 								"api",
 								"products"
 							]
@@ -375,12 +376,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://{{base_url}}user-service/api/users/{{userId}}",
-							"protocol": "http",
+							"raw": "{{base_url}}/user-service/api/users/{{userId}}",
 							"host": [
-								"{{base_url}}user-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"user-service",
 								"api",
 								"users",
 								"{{userId}}"
@@ -423,12 +424,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://{{base_url}}product-service/api/products",
-							"protocol": "http",
+							"raw": "{{base_url}}/product-service/api/products",
 							"host": [
-								"{{base_url}}product-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"product-service",
 								"api",
 								"products"
 							]
@@ -495,12 +496,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}order-service/api/carts",
-							"protocol": "http",
+							"raw": "{{base_url}}/order-service/api/carts",
 							"host": [
-								"{{base_url}}order-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"order-service",
 								"api",
 								"carts"
 							]
@@ -555,12 +556,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}order-service/api/orders",
-							"protocol": "http",
+							"raw": "{{base_url}}/order-service/api/orders",
 							"host": [
-								"{{base_url}}order-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"order-service",
 								"api",
 								"orders"
 							]
@@ -635,12 +636,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}payment-service/api/payments",
-							"protocol": "http",
+							"raw": "{{base_url}}/payment-service/api/payments",
 							"host": [
-								"{{base_url}}payment-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"payment-service",
 								"api",
 								"payments"
 							]
@@ -680,12 +681,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://{{base_url}}payment-service/api/payments/{{paymentId}}",
-							"protocol": "http",
+							"raw": "{{base_url}}/payment-service/api/payments/{{paymentId}}",
 							"host": [
-								"{{base_url}}payment-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"payment-service",
 								"api",
 								"payments",
 								"{{paymentId}}"
@@ -770,12 +771,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}shipping-service/api/shippings",
-							"protocol": "http",
+							"raw": "{{base_url}}/shipping-service/api/shippings",
 							"host": [
-								"{{base_url}}shipping-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"shipping-service",
 								"api",
 								"shippings"
 							]
@@ -831,12 +832,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}shipping-service/api/shippings",
-							"protocol": "http",
+							"raw": "{{base_url}}/shipping-service/api/shippings",
 							"host": [
-								"{{base_url}}shipping-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"shipping-service",
 								"api",
 								"shippings"
 							]
@@ -890,12 +891,12 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "http://{{base_url}}shipping-service/api/shippings",
-							"protocol": "http",
+							"raw": "{{base_url}}/shipping-service/api/shippings",
 							"host": [
-								"{{base_url}}shipping-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"shipping-service",
 								"api",
 								"shippings"
 							]
@@ -969,12 +970,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}favourite-service/api/favourites",
-							"protocol": "http",
+							"raw": "{{base_url}}/favourite-service/api/favourites",
 							"host": [
-								"{{base_url}}favourite-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"favourite-service",
 								"api",
 								"favourites"
 							]
@@ -1042,12 +1043,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}favourite-service/api/favourites",
-							"protocol": "http",
+							"raw": "{{base_url}}/favourite-service/api/favourites",
 							"host": [
-								"{{base_url}}favourite-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"favourite-service",
 								"api",
 								"favourites"
 							]
@@ -1115,12 +1116,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://{{base_url}}favourite-service/api/favourites",
-							"protocol": "http",
+							"raw": "{{base_url}}/favourite-service/api/favourites",
 							"host": [
-								"{{base_url}}favourite-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"favourite-service",
 								"api",
 								"favourites"
 							]
@@ -1170,12 +1171,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://{{base_url}}favourite-service/api/favourites",
-							"protocol": "http",
+							"raw": "{{base_url}}/favourite-service/api/favourites",
 							"host": [
-								"{{base_url}}favourite-service"
+								"{{base_url}}"
 							],
 							"path": [
+								"favourite-service",
 								"api",
 								"favourites"
 							]
@@ -2270,7 +2271,8 @@
 				]
 			}
 		}
-	],	"variable": [
+	],
+	"variable": [
 		{
 			"key": "createdProductResponse",
 			"value": ""
