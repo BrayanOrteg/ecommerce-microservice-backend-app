@@ -13,8 +13,9 @@ variables:
   K8S_MANIFEST_DIR: 'k8s/dev'
   IMAGE_TAG_SUFFIX: ':dev'
   COMPOSE_YML: 'compose.dev.yml'
+
 pool:
-  vmImage: 'ubuntu-latest'
+  name: 'Default'
 
 stages:
   - stage: Checkout

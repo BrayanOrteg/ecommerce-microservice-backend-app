@@ -19,7 +19,7 @@ variables:
   LOCUST_RUN_TIME: '30s'
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: 'Default'
 
 stages:
   - stage: Checkout
