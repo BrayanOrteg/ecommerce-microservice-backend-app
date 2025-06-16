@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.2.1...v1.3.0) (2025-06-16)
+
+
+### Features
+
+* required approval ([fe32c42](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/fe32c42f638e1cf577c5db7ca074a7d600949818))
+
 ## [1.2.1](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.2.0...v1.2.1) (2025-06-16)
 
 
