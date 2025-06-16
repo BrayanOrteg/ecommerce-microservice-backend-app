@@ -275,6 +275,38 @@ stages:
             env:
               KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
 
+          - bash: |
+              echo "Attempting to get Cloud Config Load Balancer IP..."
+              CLOUD_CONFIG_IP=""
+              RETRY_COUNT=0
+              MAX_RETRIES=12 # Retry for 12 * 10s = 120 seconds
+              RETRY_INTERVAL=10
+
+              while [ -z "$CLOUD_CONFIG_IP" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                CLOUD_CONFIG_IP=$(kubectl get service cloud-config --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+                if [ -z "$CLOUD_CONFIG_IP" ]; then
+                  RETRY_COUNT=$((RETRY_COUNT + 1))
+                  echo "API Gateway IP not available yet. Retry $RETRY_COUNT/$MAX_RETRIES. Waiting $RETRY_INTERVAL seconds..."
+                  sleep $RETRY_INTERVAL
+                else
+                  echo "Cloud Config IP found: $CLOUD_CONFIG_IP"
+                  break
+                fi
+              done
+
+              if [ -z "$CLOUD_CONFIG_IP" ]; then
+                echo "##vso[task.logissue type=error;]Failed to get Cloud Config Load Balancer IP after $MAX_RETRIES retries."
+                kubectl get service api-gateway --namespace default -o yaml # Print service details for debugging
+                exit 1
+              fi
+              
+              echo "Successfully retrieved CLOUD_CONFIG_IP: $CLOUD_CONFIG_IP"
+              echo "http://$CLOUD_CONFIG_IP:9296"
+            name: SetE2EVar
+            displayName: 'Extract and Set Cloud Config IP'
+            env:
+              KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
+
   - stage: SemanticRelease
     displayName: 'Semantic Release Stage'
     jobs:

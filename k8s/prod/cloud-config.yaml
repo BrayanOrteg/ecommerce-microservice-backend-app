@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: cloud-config
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: cloud-config
   ports:
