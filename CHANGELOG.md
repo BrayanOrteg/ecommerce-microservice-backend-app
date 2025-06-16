@@ -1,3 +1,28 @@
+# [1.2.0](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.1.0...v1.2.0) (2025-06-16)
+
+
+### Bug Fixes
+
+* change KUBECONFIG route ([2568fbd](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/2568fbd756c0e21765ada1a9167add44a76eb04c))
+* change tasks order ([fa49a7f](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/fa49a7f19c846cb0a414e8a02a9292c0988ee20c))
+* correction in postman collection ([d1bdda2](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/d1bdda226d5ddf23ff9e21c2002682dae8c26486))
+* correction in postman collection and stage and prod pipeline ([59d84e1](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/59d84e13eb6716bad0d545666a92ca4b88df61af))
+* set KUBECONFIG for another task ([5f8dc5e](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/5f8dc5e4be220209e2930e135ab1f8d8e8741f9f))
+* turn of for PRs ([8540ad4](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/8540ad40ea7e3bdbabad5897aec9e73142e24c7e))
+* turn of PRs ([4103e48](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/4103e48b19a286310bcdb575296f63d14be6e181))
+* turn of PRs ([87cdd64](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/87cdd64ecb721e9cf61faa522c0b44bfb7989402))
+
+
+### Features
+
+* Merge branch 'master' of https://github.com/BrayanOrteg/ecommerce-microservice-backend-app into tests ([d0eeaa0](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/d0eeaa0d282a3c680ecef8eaaa796a6c63d6a48e))
+* merge pull request [#1](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/issues/1) from BrayanOrteg/tests ([5f41cab](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/5f41cab3e37a20504ea78127259063cb419835ed))
+* merge pull request [#2](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/issues/2) from BrayanOrteg/dev ([07f1403](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/07f140380d671047c0feeddd95120cba72532716))
+* merge pull request [#3](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/issues/3) from BrayanOrteg/dev ([82b93b5](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/82b93b5ab4fa30add019ca57eaee462718d82f4f))
+* merge pull request [#4](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/issues/4) from BrayanOrteg/dev ([3f45ab4](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/3f45ab4bf2c2ca4a6f9e7f4ec20aba73c7ea6797))
+* merge pull request [#5](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/issues/5) from BrayanOrteg/stage ([1dbc642](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/1dbc642591f463fa6eb039fcee4acc1c1e11b696))
+* merge with master ([a97020f](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/a97020f228a5a8882aca59573a0f5350cd158479))
+
 # [1.1.0](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.0.2...v1.1.0) (2025-06-15)
 
 
