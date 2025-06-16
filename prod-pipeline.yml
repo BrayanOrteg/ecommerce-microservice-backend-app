@@ -162,150 +162,154 @@ stages:
     displayName: 'Deploy to AKS'
     dependsOn: PushDockerImages
     jobs:
-      - job: DeployJob
-        steps:
+      - deployment: DeployJob
+        displayName: "Deployment"
+        environment: "prod"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadSecureFile@1
+                  name: grafanaDeployScriptFile
+                  displayName: 'Download .grafana script'
+                  inputs:
+                    secureFile: '.grafana'
+                - script: |
+                    chmod +x $(grafanaDeployScriptFile.secureFilePath)
 
-          - task: DownloadSecureFile@1
-            name: grafanaDeployScriptFile
-            displayName: 'Download .grafana script'
-            inputs:
-              secureFile: '.grafana'
-          - script: |
-              chmod +x $(grafanaDeployScriptFile.secureFilePath)
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: $(azureSubscription)
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --file $(Agent.TempDirectory)/kubeconfig --overwrite-existing
+                      echo "Kubeconfig stored at $(Agent.TempDirectory)/kubeconfig"
+                  displayName: 'Get AKS Credentials'
 
-          - task: AzureCLI@2
-            inputs:
-              azureSubscription: $(azureSubscription)
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --file $(Agent.TempDirectory)/kubeconfig --overwrite-existing
-                echo "Kubeconfig stored at $(Agent.TempDirectory)/kubeconfig"
-            displayName: 'Get AKS Credentials'
+                - task: Bash@3
+                  displayName: 'Execute .grafana script'
+                  inputs:
+                    filePath: $(grafanaDeployScriptFile.secureFilePath)
+                  env:
+                    KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
 
-          - task: Bash@3
-            displayName: 'Execute .grafana script'
-            inputs:
-              filePath: $(grafanaDeployScriptFile.secureFilePath)
-            env:
-              KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
+                - task: KubernetesManifest@1
+                  displayName: 'Deploy Service Discovery'
+                  inputs:
+                    action: 'deploy'
+                    connectionType: 'azureResourceManager'
+                    azureSubscriptionConnection: $(azureSubscription)
+                    azureResourceGroup: $(RESOURCE_GROUP)
+                    kubernetesCluster: $(CLUSTER_NAME)
+                    namespace: 'default'
+                    manifests: '$(K8S_MANIFEST_DIR)/service-discovery.yaml'
 
-          - task: KubernetesManifest@1
-            displayName: 'Deploy Service Discovery'
-            inputs:
-              action: 'deploy'
-              connectionType: 'azureResourceManager'
-              azureSubscriptionConnection: $(azureSubscription)
-              azureResourceGroup: $(RESOURCE_GROUP)
-              kubernetesCluster: $(CLUSTER_NAME)
-              namespace: 'default'
-              manifests: '$(K8S_MANIFEST_DIR)/service-discovery.yaml'
+                - task: KubernetesManifest@1
+                  displayName: 'Deploy RabbitMQ'
+                  inputs:
+                    action: 'deploy'
+                    connectionType: 'azureResourceManager'
+                    azureSubscriptionConnection: $(azureSubscription)
+                    azureResourceGroup: $(RESOURCE_GROUP)
+                    kubernetesCluster: $(CLUSTER_NAME)
+                    namespace: 'default'
+                    manifests: '$(K8S_MANIFEST_DIR)/rabbitmq.yaml'
 
-          - task: KubernetesManifest@1
-            displayName: 'Deploy RabbitMQ'
-            inputs:
-              action: 'deploy'
-              connectionType: 'azureResourceManager'
-              azureSubscriptionConnection: $(azureSubscription)
-              azureResourceGroup: $(RESOURCE_GROUP)
-              kubernetesCluster: $(CLUSTER_NAME)
-              namespace: 'default'
-              manifests: '$(K8S_MANIFEST_DIR)/rabbitmq.yaml'
+                - task: KubernetesManifest@1
+                  displayName: 'Deploy Cloud Config'
+                  inputs:
+                    action: 'deploy'
+                    connectionType: 'azureResourceManager'
+                    azureSubscriptionConnection: $(azureSubscription)
+                    azureResourceGroup: $(RESOURCE_GROUP)
+                    kubernetesCluster: $(CLUSTER_NAME)
+                    namespace: 'default'
+                    manifests: '$(K8S_MANIFEST_DIR)/cloud-config.yaml'
 
-          - task: KubernetesManifest@1
-            displayName: 'Deploy Cloud Config'
-            inputs:
-              action: 'deploy'
-              connectionType: 'azureResourceManager'
-              azureSubscriptionConnection: $(azureSubscription)
-              azureResourceGroup: $(RESOURCE_GROUP)
-              kubernetesCluster: $(CLUSTER_NAME)
-              namespace: 'default'
-              manifests: '$(K8S_MANIFEST_DIR)/cloud-config.yaml'
+                - task: KubernetesManifest@1
+                  displayName: 'Deploy Every Service'
+                  inputs:
+                    action: 'deploy'
+                    connectionType: 'azureResourceManager'
+                    azureSubscriptionConnection: $(azureSubscription)
+                    azureResourceGroup: $(RESOURCE_GROUP)
+                    kubernetesCluster: $(CLUSTER_NAME)
+                    namespace: 'default'
+                    manifests: |
+                      $(K8S_MANIFEST_DIR)/api-gateway.yaml
+                      $(K8S_MANIFEST_DIR)/rabbitmq.yaml
+                      $(K8S_MANIFEST_DIR)/order-service.yaml
+                      $(K8S_MANIFEST_DIR)/payment-service.yaml
+                      $(K8S_MANIFEST_DIR)/product-service.yaml
+                      $(K8S_MANIFEST_DIR)/shipping-service.yaml
+                      $(K8S_MANIFEST_DIR)/user-service.yaml
+                      $(K8S_MANIFEST_DIR)/favourite-service.yaml
+                      $(K8S_MANIFEST_DIR)/proxy-client.yaml
 
-          - task: KubernetesManifest@1
-            displayName: 'Deploy Every Service'
-            inputs:
-              action: 'deploy'
-              connectionType: 'azureResourceManager'
-              azureSubscriptionConnection: $(azureSubscription)
-              azureResourceGroup: $(RESOURCE_GROUP)
-              kubernetesCluster: $(CLUSTER_NAME)
-              namespace: 'default'
-              manifests: |
-                $(K8S_MANIFEST_DIR)/api-gateway.yaml
-                $(K8S_MANIFEST_DIR)/rabbitmq.yaml
-                $(K8S_MANIFEST_DIR)/order-service.yaml
-                $(K8S_MANIFEST_DIR)/payment-service.yaml
-                $(K8S_MANIFEST_DIR)/product-service.yaml
-                $(K8S_MANIFEST_DIR)/shipping-service.yaml
-                $(K8S_MANIFEST_DIR)/user-service.yaml
-                $(K8S_MANIFEST_DIR)/favourite-service.yaml
-                $(K8S_MANIFEST_DIR)/proxy-client.yaml
+                - bash: |
+                    echo "Attempting to get API Gateway Load Balancer IP..."
+                    API_GATEWAY_IP=""
+                    RETRY_COUNT=0
+                    MAX_RETRIES=12 # Retry for 12 * 10s = 120 seconds
+                    RETRY_INTERVAL=10
 
-          - bash: |
-              echo "Attempting to get API Gateway Load Balancer IP..."
-              API_GATEWAY_IP=""
-              RETRY_COUNT=0
-              MAX_RETRIES=12 # Retry for 12 * 10s = 120 seconds
-              RETRY_INTERVAL=10
+                    while [ -z "$API_GATEWAY_IP" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                      API_GATEWAY_IP=$(kubectl get service api-gateway --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+                      if [ -z "$API_GATEWAY_IP" ]; then
+                        RETRY_COUNT=$((RETRY_COUNT + 1))
+                        echo "API Gateway IP not available yet. Retry $RETRY_COUNT/$MAX_RETRIES. Waiting $RETRY_INTERVAL seconds..."
+                        sleep $RETRY_INTERVAL
+                      else
+                        echo "API Gateway IP found: $API_GATEWAY_IP"
+                        break
+                      fi
+                    done
 
-              while [ -z "$API_GATEWAY_IP" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-                API_GATEWAY_IP=$(kubectl get service api-gateway --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
-                if [ -z "$API_GATEWAY_IP" ]; then
-                  RETRY_COUNT=$((RETRY_COUNT + 1))
-                  echo "API Gateway IP not available yet. Retry $RETRY_COUNT/$MAX_RETRIES. Waiting $RETRY_INTERVAL seconds..."
-                  sleep $RETRY_INTERVAL
-                else
-                  echo "API Gateway IP found: $API_GATEWAY_IP"
-                  break
-                fi
-              done
+                    if [ -z "$API_GATEWAY_IP" ]; then
+                      echo "##vso[task.logissue type=error;]Failed to get API Gateway Load Balancer IP after $MAX_RETRIES retries."
+                      kubectl get service api-gateway --namespace default -o yaml # Print service details for debugging
+                      exit 1
+                    fi
+                    
+                    echo "Successfully retrieved API_GATEWAY_IP: $API_GATEWAY_IP"
+                    echo "http://$API_GATEWAY_IP:8080"
+                  name: GetApiGatewayIP
+                  displayName: 'Extract and Set API Gateway IP'
+                  env:
+                    KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
 
-              if [ -z "$API_GATEWAY_IP" ]; then
-                echo "##vso[task.logissue type=error;]Failed to get API Gateway Load Balancer IP after $MAX_RETRIES retries."
-                kubectl get service api-gateway --namespace default -o yaml # Print service details for debugging
-                exit 1
-              fi
-              
-              echo "Successfully retrieved API_GATEWAY_IP: $API_GATEWAY_IP"
-              echo "http://$API_GATEWAY_IP:8080"
-            name: GetApiGatewayIP
-            displayName: 'Extract and Set API Gateway IP'
-            env:
-              KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
+                - bash: |
+                    echo "Attempting to get Cloud Config Load Balancer IP..."
+                    CLOUD_CONFIG_IP=""
+                    RETRY_COUNT=0
+                    MAX_RETRIES=12 # Retry for 12 * 10s = 120 seconds
+                    RETRY_INTERVAL=10
 
-          - bash: |
-              echo "Attempting to get Cloud Config Load Balancer IP..."
-              CLOUD_CONFIG_IP=""
-              RETRY_COUNT=0
-              MAX_RETRIES=12 # Retry for 12 * 10s = 120 seconds
-              RETRY_INTERVAL=10
+                    while [ -z "$CLOUD_CONFIG_IP" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                      CLOUD_CONFIG_IP=$(kubectl get service cloud-config --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+                      if [ -z "$CLOUD_CONFIG_IP" ]; then
+                        RETRY_COUNT=$((RETRY_COUNT + 1))
+                        echo "API Gateway IP not available yet. Retry $RETRY_COUNT/$MAX_RETRIES. Waiting $RETRY_INTERVAL seconds..."
+                        sleep $RETRY_INTERVAL
+                      else
+                        echo "Cloud Config IP found: $CLOUD_CONFIG_IP"
+                        break
+                      fi
+                    done
 
-              while [ -z "$CLOUD_CONFIG_IP" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-                CLOUD_CONFIG_IP=$(kubectl get service cloud-config --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
-                if [ -z "$CLOUD_CONFIG_IP" ]; then
-                  RETRY_COUNT=$((RETRY_COUNT + 1))
-                  echo "API Gateway IP not available yet. Retry $RETRY_COUNT/$MAX_RETRIES. Waiting $RETRY_INTERVAL seconds..."
-                  sleep $RETRY_INTERVAL
-                else
-                  echo "Cloud Config IP found: $CLOUD_CONFIG_IP"
-                  break
-                fi
-              done
-
-              if [ -z "$CLOUD_CONFIG_IP" ]; then
-                echo "##vso[task.logissue type=error;]Failed to get Cloud Config Load Balancer IP after $MAX_RETRIES retries."
-                kubectl get service api-gateway --namespace default -o yaml # Print service details for debugging
-                exit 1
-              fi
-              
-              echo "Successfully retrieved CLOUD_CONFIG_IP: $CLOUD_CONFIG_IP"
-              echo "http://$CLOUD_CONFIG_IP:9296"
-            name: GetCloudConfigIP
-            displayName: 'Extract and Set Cloud Config IP'
-            env:
-              KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
+                    if [ -z "$CLOUD_CONFIG_IP" ]; then
+                      echo "##vso[task.logissue type=error;]Failed to get Cloud Config Load Balancer IP after $MAX_RETRIES retries."
+                      kubectl get service api-gateway --namespace default -o yaml # Print service details for debugging
+                      exit 1
+                    fi
+                    
+                    echo "Successfully retrieved CLOUD_CONFIG_IP: $CLOUD_CONFIG_IP"
+                    echo "http://$CLOUD_CONFIG_IP:9296"
+                  name: GetCloudConfigIP
+                  displayName: 'Extract and Set Cloud Config IP'
+                  env:
+                    KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
 
   - stage: SemanticRelease
     displayName: 'Semantic Release Stage'
