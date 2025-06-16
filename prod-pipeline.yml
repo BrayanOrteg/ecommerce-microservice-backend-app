@@ -164,7 +164,7 @@ stages:
     jobs:
       - job: DeployJob
         steps:
-        
+
           - task: DownloadSecureFile@1
             name: grafanaDeployScriptFile
             displayName: 'Download .grafana script'
@@ -178,13 +178,19 @@ stages:
               azureSubscription: $(azureSubscription)
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
-              inlineScript: 'az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --overwrite-existing'
+              inlineScript: |
+                # Explicitly define the kubeconfig path in the agent's temp directory
+                az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --file $(Agent.TempDirectory)/kubeconfig --overwrite-existing
+                echo "Kubeconfig stored at $(Agent.TempDirectory)/kubeconfig"
             displayName: 'Get AKS Credentials'
 
           - task: Bash@3
             displayName: 'Execute .grafana script'
             inputs:
               filePath: $(grafanaDeployScriptFile.secureFilePath)
+            env:
+              # Tell kubectl/helm (used by .grafana script) where to find the kubeconfig
+              KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
 
           - task: KubernetesManifest@1
             displayName: 'Deploy Service Discovery'
