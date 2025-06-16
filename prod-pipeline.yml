@@ -274,6 +274,8 @@ stages:
               echo "http://$API_GATEWAY_IP:8080"
             name: SetE2EVar
             displayName: 'Extract and Set API Gateway IP'
+            env:
+              KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
 
   - stage: SemanticRelease
     displayName: 'Semantic Release Stage'
