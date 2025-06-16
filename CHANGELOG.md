@@ -1,3 +1,11 @@
+## [1.2.1](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.2.0...v1.2.1) (2025-06-16)
+
+
+### Bug Fixes
+
+* include cloud config as load balancer ([ca7b51d](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/ca7b51d4d04eda4e61cfd0cefd9ce1ba8fe55f42))
+* typo error ([b3fbb36](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/b3fbb3648b6da286df4595c353ae33a386d08f98))
+
 # [1.2.0](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.1.0...v1.2.0) (2025-06-16)
 
 
