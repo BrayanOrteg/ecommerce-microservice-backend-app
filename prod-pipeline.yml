@@ -164,6 +164,15 @@ stages:
     jobs:
       - job: DeployJob
         steps:
+        
+          - task: DownloadSecureFile@1
+            name: grafanaDeployScriptFile
+            displayName: 'Download .grafana script'
+            inputs:
+              secureFile: '.grafana'
+          - script: |
+              chmod +x $(grafanaDeployScriptFile.secureFilePath)
+
           - task: AzureCLI@2
             inputs:
               azureSubscription: $(azureSubscription)
@@ -172,13 +181,6 @@ stages:
               inlineScript: 'az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --overwrite-existing'
             displayName: 'Get AKS Credentials'
 
-          - task: DownloadSecureFile@1
-            name: grafanaDeployScriptFile
-            displayName: 'Download .grafana script'
-            inputs:
-              secureFile: '.grafana'
-          - script: |
-              chmod +x $(grafanaDeployScriptFile.secureFilePath)
           - task: Bash@3
             displayName: 'Execute .grafana script'
             inputs:
