@@ -164,7 +164,9 @@ stages:
               azureSubscription: $(azureSubscription)
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
-              inlineScript: 'az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --overwrite-existing'
+              inlineScript: |
+                az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --file $(Agent.TempDirectory)/kubeconfig --overwrite-existing
+                echo "Kubeconfig stored at $(Agent.TempDirectory)/kubeconfig"
             displayName: 'Get AKS Credentials'
 
           - task: KubernetesManifest@1
@@ -260,6 +262,8 @@ stages:
               echo "##vso[task.setvariable variable=E2E_BASE_URL;isOutput=true]http://$API_GATEWAY_IP:8080"
             name: SetE2EVar
             displayName: 'Extract and Set API Gateway IP'
+            env:
+              KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
 
   - stage: OWASP
     displayName: 'Run OWASP Zap Scanner'
@@ -310,19 +314,13 @@ stages:
                 echo "##vso[task.logissue type=error;]E2E_BASE_URL_FOR_NEWMAN is empty or invalid in E2E stage."
               fi
             displayName: 'Debug E2E Base URL in E2E Stage'
-          - task: AzureCLI@2
-            inputs:
-              azureSubscription: $(azureSubscription)
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: 'az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --overwrite-existing'
-          - script: |
-              API_GATEWAY_IP=$(kubectl get service api-gateway --namespace default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            
           - task: Npm@1
             inputs:
               command: 'custom'
               customCommand: 'install newman newman-reporter-htmlextra -g'
             displayName: 'Install Newman and htmlextra reporter'
+            
           - task: NewmanPostman@4
             inputs:
               collectionSourceType: 'file'

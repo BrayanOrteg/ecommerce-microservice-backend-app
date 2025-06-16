@@ -179,7 +179,6 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                # Explicitly define the kubeconfig path in the agent's temp directory
                 az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --file $(Agent.TempDirectory)/kubeconfig --overwrite-existing
                 echo "Kubeconfig stored at $(Agent.TempDirectory)/kubeconfig"
             displayName: 'Get AKS Credentials'
@@ -189,7 +188,6 @@ stages:
             inputs:
               filePath: $(grafanaDeployScriptFile.secureFilePath)
             env:
-              # Tell kubectl/helm (used by .grafana script) where to find the kubeconfig
               KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
 
           - task: KubernetesManifest@1
