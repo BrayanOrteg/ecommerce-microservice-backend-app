@@ -270,7 +270,7 @@ stages:
               
               echo "Successfully retrieved API_GATEWAY_IP: $API_GATEWAY_IP"
               echo "http://$API_GATEWAY_IP:8080"
-            name: SetE2EVar
+            name: GetApiGatewayIP
             displayName: 'Extract and Set API Gateway IP'
             env:
               KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
@@ -302,7 +302,7 @@ stages:
               
               echo "Successfully retrieved CLOUD_CONFIG_IP: $CLOUD_CONFIG_IP"
               echo "http://$CLOUD_CONFIG_IP:9296"
-            name: SetE2EVar
+            name: GetCloudConfigIP
             displayName: 'Extract and Set Cloud Config IP'
             env:
               KUBECONFIG: $(Agent.TempDirectory)/kubeconfig

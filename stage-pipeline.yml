@@ -292,7 +292,7 @@ stages:
               
               echo "Successfully retrieved CLOUD_CONFIG_IP: $CLOUD_CONFIG_IP"
               echo "http://$CLOUD_CONFIG_IP:9296"
-            name: SetE2EVar
+            name: GetCloudConfigIP
             displayName: 'Extract and Set Cloud Config IP'
             env:
               KUBECONFIG: $(Agent.TempDirectory)/kubeconfig
