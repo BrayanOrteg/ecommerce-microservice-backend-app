@@ -347,11 +347,9 @@ stages:
               fi
             displayName: 'Debug E2E Base URL in E2E Stage'
             
-          - task: Npm@1
-            inputs:
-              command: 'custom'
-              customCommand: 'install newman newman-reporter-htmlextra -g'
-            displayName: 'Install Newman and htmlextra reporter'
+          - script: |
+              sudo npm install -g newman newman-reporter-htmlextra
+            displayName: 'Install Newman and Reporter in WSL'
             
           - task: NewmanPostman@4
             inputs:
@@ -384,14 +382,13 @@ stages:
       - job: DebugAndRunLocustJob
         displayName: 'Debug Variables and Run Locust'
         steps:
-          - task: UsePythonVersion@0
-            inputs:
-              versionSpec: '3.x'
-              addToPath: true
-            displayName: 'Use Python 3.x'
+          - script: |
+              echo "Verificando instalación de Python..."
+              python3 --version || sudo apt-get install -y python3
+              python3 -m pip --version || sudo apt-get install -y python3-pip
+            displayName: 'Ensure Python 3 and Pip are Installed'
 
           - script: |
-              python -m pip install --upgrade pip
               pip install locust
             displayName: 'Install Locust'
 
