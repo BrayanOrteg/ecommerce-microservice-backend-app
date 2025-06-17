@@ -410,7 +410,6 @@ stages:
 
               if [ -d "$(Build.SourcesDirectory)/locust" ]; then
                 cd "$(Build.SourcesDirectory)/locust"
-                source ../../locust-venv/bin/activate
                 
                 export LOCUST_HOST="$LOCAL_HOST_FOR_LOCUST_SCRIPT"
                 python3 -m locust -f locustfile.py \
