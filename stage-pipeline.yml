@@ -347,11 +347,9 @@ stages:
               fi
             displayName: 'Debug E2E Base URL in E2E Stage'
             
-          - task: Npm@1
-            inputs:
-              command: 'custom'
-              customCommand: 'install newman newman-reporter-htmlextra -g'
-            displayName: 'Install Newman and htmlextra reporter'
+          - script: |
+              sudo npm install -g newman newman-reporter-htmlextra
+            displayName: 'Install Newman and Reporter in WSL'
             
           - task: NewmanPostman@4
             inputs:
@@ -384,62 +382,48 @@ stages:
       - job: DebugAndRunLocustJob
         displayName: 'Debug Variables and Run Locust'
         steps:
-          - task: UsePythonVersion@0
-            inputs:
-              versionSpec: '3.x'
-              addToPath: true
-            displayName: 'Use Python 3.x'
 
           - script: |
-              python -m pip install --upgrade pip
+              python3 --version || sudo apt-get install -y python3
+              python3 -m pip --version || sudo apt-get install -y python3-pip
+
+              pip install --upgrade pip
               pip install locust
-            displayName: 'Install Locust'
 
-          - script: |
               echo "--- Locust Stage Variable Debugging ---"
-              echo "Value of LOCUST_HOST_URL_FROM_OUTPUT (defined at Locust stage level): '$(LOCUST_HOST_URL_FROM_OUTPUT)'"
-              echo "Value of LOCUST_USERS (pipeline variable): '$(LOCUST_USERS)'"
-              echo "Value of LOCUST_SPAWN_RATE (pipeline variable): '$(LOCUST_SPAWN_RATE)'"
-              echo "Value of LOCUST_RUN_TIME (pipeline variable): '$(LOCUST_RUN_TIME)'"
-              echo "---------------------------------------"
+              echo "LOCUST_HOST_URL_FROM_OUTPUT: '$(LOCUST_HOST_URL_FROM_OUTPUT)'"
+              echo "LOCUST_USERS: '$(LOCUST_USERS)'"
+              echo "LOCUST_SPAWN_RATE: '$(LOCUST_SPAWN_RATE)'"
+              echo "LOCUST_RUN_TIME: '$(LOCUST_RUN_TIME)'"
 
               LOCAL_HOST_FOR_LOCUST_SCRIPT="$(LOCUST_HOST_URL_FROM_OUTPUT)"
 
               if [ -z "$LOCAL_HOST_FOR_LOCUST_SCRIPT" ] || [ "$LOCAL_HOST_FOR_LOCUST_SCRIPT" == "http://:8080" ]; then
-                echo "##vso[task.logissue type=error;]LOCAL_HOST_FOR_LOCUST_SCRIPT is empty or invalid ('$LOCAL_HOST_FOR_LOCUST_SCRIPT') in Locust stage. Check stageDependencies syntax, names, and DeployToAKS stage logs."
-                echo "Falling back to default host from locustfile.py, which will likely fail."
-                # exit 1 # Consider failing the pipeline if the URL is not correctly propagated
+                echo "##vso[task.logissue type=error;]LOCAL_HOST_FOR_LOCUST_SCRIPT es inválido ('$LOCAL_HOST_FOR_LOCUST_SCRIPT')."
+                echo "Falling back to default host from locustfile.py."
               else
-                echo "LOCUST_HOST_URL_FROM_OUTPUT is valid. Proceeding with value: '$LOCAL_HOST_FOR_LOCUST_SCRIPT'"
+                echo "LOCUST_HOST_URL_FROM_OUTPUT es válido: '$LOCAL_HOST_FOR_LOCUST_SCRIPT'"
               fi
-              
-              echo "Current directory before cd: $(pwd)"
-              # Ensure the 'locust' directory is directly under the root of the checkout
+
               if [ -d "$(Build.SourcesDirectory)/locust" ]; then
                 cd "$(Build.SourcesDirectory)/locust"
-                echo "Current directory after cd: $(pwd)"
-                echo "Contents of locust directory:"
-                ls -la
+                
+                export LOCUST_HOST="$LOCAL_HOST_FOR_LOCUST_SCRIPT"
+                python3 -m locust -f locustfile.py \
+                  --headless \
+                  -u $(LOCUST_USERS) \
+                  -r $(LOCUST_SPAWN_RATE) \
+                  -t $(LOCUST_RUN_TIME) \
+                  --csv=load_test_report \
+                  --html=load_test_report.html
               else
-                echo "##vso[task.logissue type=error;]Locust directory not found at $(Build.SourcesDirectory)/locust"
+                echo "##vso[task.logissue type=error;]Folder not found 'locust'"
                 exit 1
               fi
-              
-              export LOCUST_HOST="$LOCAL_HOST_FOR_LOCUST_SCRIPT"
-              echo "LOCUST_HOST environment variable will be set to: '$LOCUST_HOST' for locust execution"
-              
-              echo "Executing Locust..."
-              python3 -m locust -f locustfile.py \
-                --headless \
-                -u $(LOCUST_USERS) \
-                -r $(LOCUST_SPAWN_RATE) \
-                -t $(LOCUST_RUN_TIME) \
-                --csv=load_test_report \
-                --html=load_test_report.html
-              
-              echo "Locust execution finished. Checking for report files in $(pwd):"
+
+              echo "Files:"
               ls -la
-            displayName: 'Debug and Run Locust Test'
+            displayName: 'Install and Run Locust'
             
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Locust HTML Report'
