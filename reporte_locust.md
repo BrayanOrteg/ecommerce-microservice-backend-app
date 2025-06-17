@@ -2,6 +2,8 @@
 
 El reporte generado por Locust se encuentra incluido en la entrega, correspondiente a la simulación de carga sobre el sistema desplegado en Azure Kubernetes Service (AKS), con infraestructura aprovisionada mediante Terraform. A continuación, se presentan los hallazgos y análisis más relevantes:
 
+Actualización
+
 ---
 
 ## ⏱️ Tiempo de Respuesta
