@@ -1,3 +1,19 @@
+# [1.4.0](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.3.0...v1.4.0) (2025-06-17)
+
+
+### Bug Fixes
+
+* change to wsl ([4c088d9](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/4c088d9edafa1fafe0c0f6e4037a9836d71c9700))
+* try to solve locust error ([c8b241b](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/c8b241b09493c9200d409691187c1fb75d3b05d6))
+* try to solve locust error 2 ([98cd84b](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/98cd84b0cc31a84ac68a55a2ba30df380d54a73c))
+* try to solve locust error 3 ([e63c059](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/e63c059904b6fd5574764b6fd862c41c4ab6388b))
+* update for wsl agent in stage ([45d59d2](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/45d59d2af741278aff2a546091fb22b975ea8b00))
+
+
+### Features
+
+* add final documents ([c4949ba](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/commit/c4949bad666782ed52c3e0594779c514120d2f2c))
+
 # [1.3.0](https://github.com/BrayanOrteg/ecommerce-microservice-backend-app/compare/v1.2.1...v1.3.0) (2025-06-16)
 
 
